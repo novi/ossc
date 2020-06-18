@@ -44,6 +44,8 @@ inline void ths_writereg(alt_u8 channel, alt_u8 data)
 
 int ths_init()
 {
+    return 1; // disabled
+    
     //Avoid random FIFO state (see datasheet p.37)
     I2C_write(I2CA_BASE, 0x00, 0);
     usleep(10);
@@ -58,6 +60,8 @@ int ths_init()
 
 void ths_set_lpf(alt_u8 val)
 {
+    return; // disabled
+    
     alt_u8 status = ths_readreg(THS_CH1) & ~THS_LPF_MASK;
     status |= (val<<THS_LPF_OFFS);
 
@@ -69,6 +73,8 @@ void ths_set_lpf(alt_u8 val)
 
 void ths_source_sel(ths_input_t input, alt_u8 lpf)
 {
+    return; // disabled
+    
     alt_u8 status = ths_readreg(THS_CH1) & ~(THS_SRC_MASK|THS_MODE_MASK);
     //alt_u8 status = 0x00;
 
