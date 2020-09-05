@@ -22,10 +22,10 @@
 
 module ossc (
     input clk27,
-    input ir_rx,
+    // input ir_rx,
     inout scl,
     inout sda,
-    input [1:0] btn,
+    // input [1:0] btn,
     input [7:0] R_in,
     input [7:0] G_in,
     input [7:0] B_in,
@@ -41,17 +41,51 @@ module ossc (
     output reg HDMI_TX_HS,
     output reg HDMI_TX_VS,
     input HDMI_TX_INT_N,
-    input HDMI_TX_MODE,
+    // input HDMI_TX_MODE,
     output hw_reset_n,
-    output LED_G,
-    output LED_R,
-    output LCD_RS,
-    output LCD_CS_N,
-    output LCD_BL,
-    output SD_CLK,
-    inout SD_CMD,
-    inout [3:0] SD_DAT
+    // output LED_G,
+    // output LED_R, // LED0
+    // output LCD_RS,
+    // output LCD_CS_N,
+    // output LCD_BL,
+    // output SD_CLK,
+    // inout SD_CMD,
+    // inout [3:0] SD_DAT,
+
+    // NeXT Sound Box
+    input from_kb, // and BTN0
+    output to_kb,
+    input mon_clk,
+    input to_mon,
+    output from_mon,
+    output spdif_led0,
+    input mc_sck,
+    input mc_mosi,
+    input mc_ss,
+    output mc_miso,
+    input mic_bclk,
+    input mic_lrck,
+    input mic_data,
+    input audio_mclk,
+    output audio_bclk,
+    output audio_lrck,
+    output audio_data
 );
+
+// NeXT Sound Box additional start
+// disable unused funcions
+wire HDMI_TX_MODE;
+assign HDMI_TX_MODE = 0;
+wire SD_CMD;
+//assign SD_CMD = 1;
+wire [3:0] SD_DAT;
+//assign SD_DAT = 4'b1111;
+wire ir_rx;
+assign ir_rx = 0;
+wire [1:0] btn;
+assign btn = 2'b11;
+
+// NeXT Sound Box end
 
 
 wire [15:0] sys_ctrl;

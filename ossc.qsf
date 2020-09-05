@@ -56,41 +56,40 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 
 
-set_location_assignment PIN_25 -to clk27
-set_location_assignment PIN_99 -to hw_reset_n
-set_location_assignment PIN_23 -to ir_rx
+set_location_assignment PIN_23 -to clk27
+set_location_assignment PIN_76 -to hw_reset_n
 
 #============================================================
 # TVP7002
 #============================================================
-set_location_assignment PIN_52 -to R_in[0]
-set_location_assignment PIN_53 -to R_in[1]
-set_location_assignment PIN_54 -to R_in[2]
-set_location_assignment PIN_55 -to R_in[3]
-set_location_assignment PIN_58 -to R_in[4]
-set_location_assignment PIN_59 -to R_in[5]
-set_location_assignment PIN_60 -to R_in[6]
-set_location_assignment PIN_61 -to R_in[7]
-set_location_assignment PIN_88 -to B_in[7]
-set_location_assignment PIN_87 -to B_in[6]
-set_location_assignment PIN_86 -to B_in[5]
-set_location_assignment PIN_85 -to B_in[4]
-set_location_assignment PIN_83 -to B_in[3]
-set_location_assignment PIN_80 -to B_in[2]
-set_location_assignment PIN_77 -to B_in[1]
+set_location_assignment PIN_24 -to R_in[0]
+set_location_assignment PIN_25 -to R_in[1]
+set_location_assignment PIN_28 -to R_in[2]
+set_location_assignment PIN_33 -to R_in[3]
+set_location_assignment PIN_39 -to R_in[4]
+set_location_assignment PIN_42 -to R_in[5]
+set_location_assignment PIN_43 -to R_in[6]
+set_location_assignment PIN_44 -to R_in[7]
+set_location_assignment PIN_67 -to B_in[7]
+set_location_assignment PIN_66 -to B_in[6]
+set_location_assignment PIN_65 -to B_in[5]
+set_location_assignment PIN_64 -to B_in[4]
+set_location_assignment PIN_61 -to B_in[3]
+set_location_assignment PIN_60 -to B_in[2]
+set_location_assignment PIN_59 -to B_in[1]
 set_location_assignment PIN_89 -to PCLK_in
-set_location_assignment PIN_76 -to B_in[0]
+set_location_assignment PIN_58 -to B_in[0]
 set_location_assignment PIN_90 -to HSYNC_in
 set_location_assignment PIN_91 -to VSYNC_in
-set_location_assignment PIN_98 -to FID_in
-set_location_assignment PIN_72 -to G_in[7]
-set_location_assignment PIN_71 -to G_in[6]
-set_location_assignment PIN_69 -to G_in[5]
-set_location_assignment PIN_68 -to G_in[4]
-set_location_assignment PIN_67 -to G_in[3]
-set_location_assignment PIN_66 -to G_in[2]
-set_location_assignment PIN_65 -to G_in[1]
-set_location_assignment PIN_64 -to G_in[0]
+set_location_assignment PIN_126 -to FID_in
+set_location_assignment PIN_55 -to G_in[7]
+set_location_assignment PIN_54 -to G_in[6]
+set_location_assignment PIN_53 -to G_in[5]
+set_location_assignment PIN_52 -to G_in[4]
+set_location_assignment PIN_51 -to G_in[3]
+set_location_assignment PIN_50 -to G_in[2]
+set_location_assignment PIN_49 -to G_in[1]
+set_location_assignment PIN_46 -to G_in[0]
 
 #============================================================
 # HDMITX
@@ -123,43 +122,29 @@ set_location_assignment PIN_144 -to HDMI_TX_RD[4]
 set_location_assignment PIN_7 -to HDMI_TX_RD[5]
 set_location_assignment PIN_10 -to HDMI_TX_RD[6]
 set_location_assignment PIN_11 -to HDMI_TX_RD[7]
-set_location_assignment PIN_100 -to HDMI_TX_INT_N
-set_location_assignment PIN_127 -to HDMI_TX_MODE
+set_location_assignment PIN_129 -to HDMI_TX_INT_N
 
 #============================================================
 # SD card
 #============================================================
-set_location_assignment PIN_32 -to SD_CLK
-set_location_assignment PIN_31 -to SD_CMD
-set_location_assignment PIN_33 -to SD_DAT[0]
-set_location_assignment PIN_39 -to SD_DAT[1]
-set_location_assignment PIN_28 -to SD_DAT[2]
-set_location_assignment PIN_30 -to SD_DAT[3]
 
 #============================================================
 # Leds
 #============================================================
-set_location_assignment PIN_44 -to LED_G
-set_location_assignment PIN_46 -to LED_R
 
 #============================================================
 # I2C
 #============================================================
-set_location_assignment PIN_49 -to sda
-set_location_assignment PIN_50 -to scl
+set_location_assignment PIN_31 -to sda
+set_location_assignment PIN_32 -to scl
 
 #============================================================
 # Char LCD
 #============================================================
-set_location_assignment PIN_42 -to LCD_RS
-set_location_assignment PIN_43 -to LCD_CS_N
-set_location_assignment PIN_51 -to LCD_BL
 
 #============================================================
 # Buttons
 #============================================================
-set_location_assignment PIN_129 -to btn[1]
-set_location_assignment PIN_128 -to btn[0]
 
 
 
@@ -240,4 +225,27 @@ set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 set_global_assignment -name QIP_FILE rtl/char_array.qip
+set_location_assignment PIN_30 -to spdif_led0
+set_location_assignment PIN_72 -to to_kb
+set_location_assignment PIN_68 -to mon_clk
+set_location_assignment PIN_69 -to to_mon
+set_location_assignment PIN_71 -to from_mon
+set_location_assignment PIN_128 -to from_kb
+set_location_assignment PIN_127 -to audio_mclk
+set_location_assignment PIN_100 -to audio_data
+set_location_assignment PIN_99 -to audio_lrck
+set_location_assignment PIN_88 -to mic_data
+set_location_assignment PIN_87 -to mic_lrck
+set_location_assignment PIN_85 -to mc_ss
+set_location_assignment PIN_83 -to mc_sck
+set_location_assignment PIN_77 -to mc_mosi
+set_location_assignment PIN_80 -to mc_miso
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_miso
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_mosi
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_sck
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_ss
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mic_data
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mic_lrck
+set_location_assignment PIN_86 -to mic_bclk
+set_location_assignment PIN_98 -to audio_bclk
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
