@@ -74,6 +74,7 @@ module ossc (
 
 // NeXT Sound Box additional start
 // disable unused funcions
+wire LED_G, LED_R, LCD_RS, LCD_CS_N, LCD_BL, SD_CLK;
 wire HDMI_TX_MODE;
 assign HDMI_TX_MODE = 0;
 wire SD_CMD;
@@ -84,6 +85,26 @@ wire ir_rx;
 assign ir_rx = 0;
 wire [1:0] btn;
 assign btn = 2'b11;
+
+NextSoundBox nextsb(
+    from_kb,
+    to_kb,
+    mon_clk,
+    to_mon,
+    from_mon,
+    spdif_led0,
+    mc_sck,
+    mc_mosi,
+    mc_ss,
+    mc_miso,
+    mic_bclk,
+    mic_lrck,
+    mic_data,
+    audio_mclk,
+    audio_bclk,
+    audio_lrck,
+    audio_data
+);
 
 // NeXT Sound Box end
 
