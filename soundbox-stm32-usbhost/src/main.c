@@ -14,6 +14,34 @@ USBH_HandleTypeDef hUSBHost[5];
 static void USBH_UserProcess (USBH_HandleTypeDef *pHost, uint8_t vId);
 static void hub_process();
 void SystemClock_Config(void);
+void update_mon_out_interface();
+
+static uint8_t latest_ossc_power_state = 0;
+
+volatile void OnOSSCPowerChanged()
+{
+	update_mon_out_interface();
+}
+
+void update_mon_out_interface()
+{
+	latest_ossc_power_state = ReadGPIO(PIN_IN_OSSC_POWER);
+	WriteGPIO(PIN_OUT_MONOUT_INTERFACE_ENABLE, 1);
+}
+
+void update_usb_host_power()
+{
+	WriteGPIO(PIN_OUT_USB_ENABLE, 0);
+}
+
+void init_gpio_value()
+{
+	WriteGPIO(PIN_OUT_NEXT_POWERSW, 0);
+	WriteGPIO(PIN_OUT_SPI_SS, 0);
+	WriteGPIO(PIN_OUT_STATUS_LED, 0);
+	update_usb_host_power();
+	update_mon_out_interface();
+}
 
 int main(void)
 {
@@ -23,6 +51,7 @@ int main(void)
 	SystemClock_Config();
 
 	MX_GPIO_Init();
+	init_gpio_value();
 	LOG_INIT(USARTx, 115200);
 	MX_I2C2_Init();
 	MX_SPI1_Init();
@@ -43,6 +72,7 @@ int main(void)
 	USBH_RegisterClass(&hUSBHost[0], USBH_HUB_CLASS);
 
 	USBH_Start(&hUSBHost[0]);
+	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 
 	int j = 0;
 	while(1)
@@ -50,14 +80,17 @@ int main(void)
 		if (i++ > 150000) {
 			i = 0;
 			j++;
-			LOG("test %d", j);
+			LOG("test %d, usb fault=%d, ossc power=%d", j, 
+				ReadGPIO(PIN_IN_USB_FAULT),
+				latest_ossc_power_state
+			);			
 		}
 			
 
-		// if(i > 0 && i <= 150000/2)
-			// BSP_LED_On(LED1);
-		// else
-			// BSP_LED_Off(LED1);
+		if(i > 0 && i <= 150000/2)
+			WriteGPIO(PIN_OUT_STATUS_LED, 0);
+		else
+			WriteGPIO(PIN_OUT_STATUS_LED, 1);
 
 		// LOG("test\n");
 		hub_process();

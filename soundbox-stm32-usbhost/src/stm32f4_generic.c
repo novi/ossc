@@ -2,6 +2,7 @@
 #include "usbh_conf.h"
 
 extern void Error_Handler(void);
+extern volatile void OnOSSCPowerChanged();
 
 extern HCD_HandleTypeDef _hHCD[2];
 
@@ -20,6 +21,9 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
@@ -42,17 +46,60 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PB14 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC9 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_12;
+  /*Configure GPIO pin : PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+}
+
+void WriteGPIO(MCU_Pin pin, uint8_t value)
+{
+  switch (pin) {
+    case PIN_OUT_MONOUT_INTERFACE_ENABLE:
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, (!value) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+    case PIN_OUT_NEXT_POWERSW:
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+    case PIN_OUT_SPI_SS:
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, (!value) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+    case PIN_OUT_STATUS_LED:
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+    case PIN_OUT_USB_ENABLE:
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, (!value) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+    default:
+    break;
+  }
+}
+
+uint8_t ReadGPIO(MCU_Pin pin)
+{
+  switch (pin) {
+    case PIN_IN_OSSC_POWER:
+    return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_12);
+    case PIN_IN_USB_FAULT:
+    return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9);
+    default:
+    break;
+  }
+  return 0;
 }
 
 
@@ -217,4 +264,10 @@ void OTG_FS_IRQHandler(void)
 
 	if(_hHCD[ID_USB_HOST_FS].Instance == USB_OTG_FS)
 		HAL_HCD_IRQHandler(&_hHCD[ID_USB_HOST_FS]);
+}
+
+void EXTI15_10_IRQHandler(void)
+{
+  OnOSSCPowerChanged();
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
 }
