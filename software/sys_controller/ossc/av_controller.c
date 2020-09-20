@@ -110,13 +110,21 @@ inline void lcd_write_menu()
 {
     strncpy((char*)osd->osd_chars.row1, menu_row1, LCD_ROW_LEN);
     strncpy((char*)osd->osd_chars.row2, menu_row2, LCD_ROW_LEN);
-    lcd_write((char*)&menu_row1, (char*)&menu_row2);
+    // TODO: no lcd
+    // lcd_write((char*)&menu_row1, (char*)&menu_row2);
+    menu_row1[LCD_ROW_LEN] = '\0';
+    menu_row2[LCD_ROW_LEN] = '\0';
+    printf("LCD: %s\n%s\n", menu_row1, menu_row2);
 }
 
 inline void lcd_write_status() {
     strncpy((char*)osd->osd_chars.row1, row1, LCD_ROW_LEN);
     strncpy((char*)osd->osd_chars.row2, row2, LCD_ROW_LEN);
-    lcd_write((char*)&row1, (char*)&row2);
+    // TODO: no lcd
+    // lcd_write((char*)&row1, (char*)&row2);
+    row1[LCD_ROW_LEN] = '\0';
+    row2[LCD_ROW_LEN] = '\0';
+    printf("LCD: %s\n%s\n", row1, row2);
 }
 
 #ifdef ENABLE_AUDIO
@@ -212,26 +220,26 @@ void set_lpf(alt_u8 lpf)
         switch (target_type) {
         case VIDEO_PC:
             tvp_set_lpf((pclk < 30000000) ? 0x0F : 0);
-            ths_set_lpf(THS_LPF_BYPASS);
+            // ths_set_lpf(THS_LPF_BYPASS);
             break;
         case VIDEO_HDTV:
             tvp_set_lpf(0);
-            ths_set_lpf((pclk < 80000000) ? THS_LPF_35MHZ : THS_LPF_BYPASS);
+            // ths_set_lpf((pclk < 80000000) ? THS_LPF_35MHZ : THS_LPF_BYPASS);
             break;
         case VIDEO_EDTV:
             tvp_set_lpf(0);
-            ths_set_lpf(THS_LPF_16MHZ);
+            // ths_set_lpf(THS_LPF_16MHZ);
             break;
         case VIDEO_SDTV:
         case VIDEO_LDTV:
         default:
             tvp_set_lpf(0);
-            ths_set_lpf(THS_LPF_9MHZ);
+            // ths_set_lpf(THS_LPF_9MHZ);
             break;
         }
     } else {
         tvp_set_lpf((tc.video_lpf == 2) ? 0x0F : 0);
-        ths_set_lpf((tc.video_lpf > 2) ? (VIDEO_LPF_MAX-tc.video_lpf) : THS_LPF_BYPASS);
+        // ths_set_lpf((tc.video_lpf > 2) ? (VIDEO_LPF_MAX-tc.video_lpf) : THS_LPF_BYPASS);
     }
 }
 
@@ -439,8 +447,8 @@ status_t get_status(tvp_sync_input_t syncinput)
         (tc.audio_swap_lr != cm.cc.audio_swap_lr))
         SetupAudio(tc.tx_mode);
 
-    if (pcm1862_active && (tc.audio_gain != cm.cc.audio_gain))
-        pcm_set_gain(tc.audio_gain-AUDIO_GAIN_0DB);
+    // if (pcm1862_active && (tc.audio_gain != cm.cc.audio_gain))
+        // pcm_set_gain(tc.audio_gain-AUDIO_GAIN_0DB);
 #endif
 
     cm.cc = tc;
@@ -792,17 +800,23 @@ int init_hw()
     //over 200ms and LCD may be buggy?
     usleep(200000);
 
+#if DEBUG
+    usleep(1000*1000); // wait for boot
+    printf("started in DEBUG mode.\n");
+#endif
+
     // IT6613 officially supports only 100kHz, but 400kHz seems to work
     I2C_init(I2CA_BASE,ALT_CPU_FREQ,400000);
     //I2C_init(I2C_OPENCORES_1_BASE,ALT_CPU_FREQ,400000);
 
     /* Initialize the character display */
-    lcd_init();
+    // lcd_init();
 
-    if (!ths_init()) {
+    /*if (!ths_init()) {
         printf("Error: could not read from THS7353\n");
         return -2;
     }
+    */
 
     /* check if TVP is found */
     chiprev = tvp_readreg(TVP_CHIPREV);
@@ -826,13 +840,15 @@ int init_hw()
 
     soundbox_init();
 
+    /*
 #ifdef ENABLE_AUDIO
     if (pcm1862_init()) {
         printf("PCM1862 found\n");
         pcm1862_active = 1;
     }
 #endif
-
+    */
+   
     if (check_flash() != 0) {
         printf("Error: incorrect flash type detected\n");
         return -1;
@@ -892,13 +908,14 @@ int latency_test() {
                 sys_ctrl |= LT_ARMED|(position<<LT_MODE_OFFS);
                 IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
                 //while (!sc->lt_status.lt_finished) {} //Hangs if sync is lost
-                SPI_Timer_On(1000);
+                /*SPI_Timer_On(1000);
                 while ((SPI_Timer_Status()==TRUE)) {
                     lt_status = sc->lt_status;
                     if (lt_status.lt_finished)
                         break;
                 }
                 SPI_Timer_Off();
+                */
                 latency_ms_x100 = lt_status.lt_lat_result;
                 stb_ms_x100 = lt_status.lt_stb_result;
 
@@ -1131,12 +1148,12 @@ int main()
 
             cm.avinput = target_input;
             cm.sync_active = 0;
-            ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
+            //ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
             tvp_disable_output();
 #ifdef ENABLE_AUDIO
             DisableAudioOutput();
-            if (pcm1862_active)
-                pcm_source_sel(target_pcm);
+            // if (pcm1862_active)
+                // pcm_source_sel(target_pcm);
 #endif
             tvp_source_sel(target_tvp, target_tvp_sync, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate

@@ -233,4 +233,15 @@ private:
   void selectPage(Register address);
 };
 
+
+typedef struct PCM51xx_s {
+  uint8_t _i2cAddr;
+  uint8_t _currentPage;
+} PCM51xx_;
+
+void PCM51xx_PCM51xx(PCM51xx_* p, uint8_t i2cAddr);
+bool PCM51xx_begin(PCM51xx_* p, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps);
+PCM51xx::PowerState PCM51xx_getPowerState(PCM51xx_* p);
+void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol);
+
 #endif //PCM51XX_H

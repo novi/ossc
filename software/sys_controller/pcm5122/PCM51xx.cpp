@@ -22,42 +22,49 @@
   SOFTWARE.
 */
 
-#include <stdio.h>
 #include <unistd.h>
 #include "PCM51xx.h"
 #include "system.h"
 #include "sysconfig.h"
 #include "i2c_opencores.h"
 
-PCM51xx::PCM51xx(uint8_t i2cAddr):
-  _i2cAddr(i2cAddr)
+void PCM51xx_selectPage(PCM51xx_* p, PCM51xx::Register address);
+void PCM51xx_reset(PCM51xx_* p);
+void PCM51xx_setPowerMode(PCM51xx_* p, PCM51xx::PowerMode mode);
+uint8_t PCM51xx_readRegister(PCM51xx_* p, PCM51xx::Register address);
+void PCM51xx_writeRegister(PCM51xx_* p, PCM51xx::Register address, uint8_t data);
+
+
+void PCM51xx_PCM51xx(PCM51xx_* p, uint8_t i2cAddr)
 {
-  
+  p->_i2cAddr = i2cAddr;
+  p->_currentPage = 0;
 }
 
 
-inline bool PCM51xx::begin(BitDepth bps)
+bool PCM51xx_begin_bitDepth(PCM51xx_* p, PCM51xx::BitDepth bps)
 {
   //Force a page counter sync between the local variable and the IC
-  _currentPage = 0xFF;
-  selectPage(RESET);
+  p->_currentPage = 0xFF;
+  PCM51xx_selectPage(p, PCM51xx::RESET);
 
   // Set correct I2S config
   uint8_t config = 0;
   switch (bps) {
-    case BITS_PER_SAMPLE_16: config = 0x00; break;
-    case BITS_PER_SAMPLE_24: config = 0x02; break;
-    case BITS_PER_SAMPLE_32: config = 0x03; break;
+    case PCM51xx::BITS_PER_SAMPLE_16: config = 0x00; break;
+    case PCM51xx::BITS_PER_SAMPLE_24: config = 0x02; break;
+    case PCM51xx::BITS_PER_SAMPLE_32: config = 0x03; break;
   };
-  writeRegister(I2S_FORMAT, config);
+  PCM51xx_writeRegister(p, PCM51xx::I2S_FORMAT, config);
 
   usleep(10*1000); //Wait for calibration, startup, etc
 
-  return getPowerState() == POWER_STATE_RUN;
+  return PCM51xx_getPowerState(p) == PCM51xx::POWER_STATE_RUN;
 }
 
-bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
+bool PCM51xx_begin(PCM51xx_* handle, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps)
 {
+
   //See here : https://e2e.ti.com/support/data_converters/audio_converters/f/64/t/428281
   // for a config example
 
@@ -67,16 +74,16 @@ bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
     return false;
 
   // 24 bits is not supported for 44.1kHz and 48kHz.
-  if ((rate == SAMPLE_RATE_44_1K || rate == SAMPLE_RATE_48K) && bps == BITS_PER_SAMPLE_24)
+  if ((rate == PCM51xx::SAMPLE_RATE_44_1K || rate == PCM51xx::SAMPLE_RATE_48K) && bps == PCM51xx::BITS_PER_SAMPLE_24)
     return false;
 
   //Force a page counter sync between the local variable and the IC
-  _currentPage = 0xFF;
+  handle->_currentPage = 0xFF;
 
   //Initialize system clock from the I2S BCK input
-  writeRegister(IGNORE_ERRORS, 0x1A);  // Disable clock autoset and ignore SCK detection
-  writeRegister(PLL_CLOCK_SOURCE, 0x10);  // Set PLL clock source to BCK
-  writeRegister(DAC_CLOCK_SOURCE, 0x10); // Set DAC clock source to PLL output
+  PCM51xx_writeRegister(handle, PCM51xx::IGNORE_ERRORS, 0x1A);  // Disable clock autoset and ignore SCK detection
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_CLOCK_SOURCE, 0x10);  // Set PLL clock source to BCK
+  PCM51xx_writeRegister(handle, PCM51xx::DAC_CLOCK_SOURCE, 0x10); // Set DAC clock source to PLL output
 
   //PLL configuration
   int p, j, d, r;
@@ -84,7 +91,7 @@ bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
   //Clock dividers
   int nmac, ndac, ncp, dosr, idac;
 
-  if (rate == SAMPLE_RATE_11_025K || rate == SAMPLE_RATE_22_05K || rate == SAMPLE_RATE_44_1K)
+  if (rate == PCM51xx::SAMPLE_RATE_11_025K || rate == PCM51xx::SAMPLE_RATE_22_05K || rate == PCM51xx::SAMPLE_RATE_44_1K)
   {
     //44.1kHz and derivatives.
     //P = 1, R = 2, D = 0 for all supported combinations.
@@ -105,7 +112,7 @@ bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
   {
     //8kHz and multiples.
     //PLL config for a 98.304 MHz PLL clk
-    if (bps == BITS_PER_SAMPLE_24 && bckFreq > 1536000)
+    if (bps == PCM51xx::BITS_PER_SAMPLE_24 && bckFreq > 1536000)
       p = 3;
     else if (bckFreq > 12288000)
       p = 2;
@@ -118,8 +125,8 @@ bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
 
     //Derive clocks from the 98.304MHz PLL
     switch (rate) {
-      case SAMPLE_RATE_16K: nmac = 6; break;
-      case SAMPLE_RATE_32K: nmac = 3; break;
+      case PCM51xx::SAMPLE_RATE_16K: nmac = 6; break;
+      case PCM51xx::SAMPLE_RATE_32K: nmac = 3; break;
       default:              nmac = 2; break;
     };
 
@@ -131,67 +138,67 @@ bool PCM51xx::begin(SamplingRate rate, BitDepth bps)
 
 
   // Configure PLL
-  writeRegister(PLL_P, p - 1);
-  writeRegister(PLL_J, j);
-  writeRegister(PLL_D_MSB, (d >> 8) & 0x3F);
-  writeRegister(PLL_D_LSB, d & 0xFF);
-  writeRegister(PLL_R, r - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_P, p - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_J, j);
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_D_MSB, (d >> 8) & 0x3F);
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_D_LSB, d & 0xFF);
+  PCM51xx_writeRegister(handle, PCM51xx::PLL_R, r - 1);
 
   // Clock dividers
-  writeRegister(DSP_CLOCK_DIV, nmac - 1);
-  writeRegister(DAC_CLOCK_DIV, ndac - 1);
-  writeRegister(NCP_CLOCK_DIV, ncp - 1);
-  writeRegister(OSR_CLOCK_DIV, dosr - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::DSP_CLOCK_DIV, nmac - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::DAC_CLOCK_DIV, ndac - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::NCP_CLOCK_DIV, ncp - 1);
+  PCM51xx_writeRegister(handle, PCM51xx::OSR_CLOCK_DIV, dosr - 1);
 
   // IDAC (nb of DSP clock cycles per sample)
-  writeRegister(IDAC_MSB, (idac >> 8) & 0xFF);
-  writeRegister(IDAC_LSB, idac & 0xFF);
+  PCM51xx_writeRegister(handle, PCM51xx::IDAC_MSB, (idac >> 8) & 0xFF);
+  PCM51xx_writeRegister(handle, PCM51xx::IDAC_LSB, idac & 0xFF);
 
   // FS speed mode
   int speedMode;
-  if (rate <= SAMPLE_RATE_48K)
+  if (rate <= PCM51xx::SAMPLE_RATE_48K)
     speedMode = 0;
-  else if (rate <= SAMPLE_RATE_96K)
+  else if (rate <= PCM51xx::SAMPLE_RATE_96K)
     speedMode = 1;
-  else if (rate <= SAMPLE_RATE_192K)
+  else if (rate <= PCM51xx::SAMPLE_RATE_192K)
     speedMode = 2;
   else
     speedMode = 3;
-  writeRegister(FS_SPEED_MODE, speedMode);
+  PCM51xx_writeRegister(handle, PCM51xx::FS_SPEED_MODE, speedMode);
 
-  return begin(bps);
+  return PCM51xx_begin_bitDepth(handle, bps);
 }
 
-void PCM51xx::setPowerMode(PowerMode mode)
+void PCM51xx_setPowerMode(PCM51xx_* p, PCM51xx::PowerMode mode)
 {
-  writeRegister(STANDBY_POWERDOWN, mode);
+  PCM51xx_writeRegister(p, PCM51xx::STANDBY_POWERDOWN, mode);
 }
 
-void PCM51xx::reset()
+void PCM51xx_reset(PCM51xx_* p)
 {
-  setPowerMode(POWER_MODE_STANDBY);
-  writeRegister(RESET, 0x11);
-  setPowerMode(POWER_MODE_ACTIVE);
+  PCM51xx_setPowerMode(p, PCM51xx::POWER_MODE_STANDBY);
+  PCM51xx_writeRegister(p, PCM51xx::RESET, 0x11);
+  PCM51xx_setPowerMode(p, PCM51xx::POWER_MODE_ACTIVE);
 }
 
-PCM51xx::PowerState PCM51xx::getPowerState()
+PCM51xx::PowerState PCM51xx_getPowerState(PCM51xx_* p)
 {
-  uint8_t regValue = readRegister(DSP_BOOT_POWER_STATE);
+  uint8_t regValue = PCM51xx_readRegister(p, PCM51xx::DSP_BOOT_POWER_STATE);
 
-  return (PowerState)(regValue & 0x0F);
+  return (PCM51xx::PowerState)(regValue & 0x0F);
 }
 
-void PCM51xx::setVolume(uint8_t vol)
+void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol)
 {
-  writeRegister(DIGITAL_VOLUME_L, vol);
-  writeRegister(DIGITAL_VOLUME_R, vol);
+  PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_L, vol);
+  PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_R, vol);
 }
 
-void PCM51xx::writeRegister(Register address, uint8_t data)
+void PCM51xx_writeRegister(PCM51xx_* p, PCM51xx::Register address, uint8_t data)
 {
-  selectPage(address);
+  PCM51xx_selectPage(p, address);
 
-  I2C_start(I2CA_BASE, _i2cAddr, 0);
+  I2C_start(I2CA_BASE, p->_i2cAddr, 0);
   I2C_write(I2CA_BASE, address, 0);
   I2C_write(I2CA_BASE, data, 1); 
   // _wire->beginTransmission(_i2cAddr);
@@ -200,29 +207,14 @@ void PCM51xx::writeRegister(Register address, uint8_t data)
   // _wire->endTransmission();
 }
 
-void PCM51xx::writeRegisters(Register startAddress, uint8_t *data, uint8_t len)
+uint8_t PCM51xx_readRegister(PCM51xx_* p, PCM51xx::Register address)
 {
-  selectPage(startAddress);
+  PCM51xx_selectPage(p, address);
 
-  I2C_start(I2CA_BASE, _i2cAddr, 0);
-  I2C_write(I2CA_BASE, (uint8_t)startAddress | REG_AUTO_INCREMENT_EN, 0);
-  for (int i = 0; i < len; i++)
-    I2C_write(I2CA_BASE, data[i], i == len-1);
-
-  // _wire->beginTransmission(_i2cAddr);
-  // _wire->write((uint8_t)startAddress | REG_AUTO_INCREMENT_EN);
-  // for (int i = 0; i < len; i++)
-  //   _wire->write(data[i]);
-  // _wire->endTransmission();
-}
-
-uint8_t PCM51xx::readRegister(Register address)
-{
-  selectPage(address);
-
-  I2C_start(I2CA_BASE, _i2cAddr, 0);
+  I2C_start(I2CA_BASE, p->_i2cAddr, 0);
   I2C_write(I2CA_BASE, address, 0);
-  I2C_start(I2CA_BASE, _i2cAddr, 1);
+
+  I2C_start(I2CA_BASE, p->_i2cAddr, 1);
   return I2C_read(I2CA_BASE, 1);
 
   // _wire->beginTransmission(_i2cAddr);
@@ -233,27 +225,13 @@ uint8_t PCM51xx::readRegister(Register address)
   // return _wire->read();
 }
 
-/*
-uint8_t PCM51xx::readRegisters(Register startAddress, uint8_t *buffer, uint8_t len)
-{
-  selectPage(startAddress);
-
-  // _wire->beginTransmission(_i2cAddr);
-  // _wire->write((uint8_t)startAddress | REG_AUTO_INCREMENT_EN);
-  // _wire->endTransmission();
-
-  // _wire->requestFrom(_i2cAddr, len);
-  // return _wire->readBytes(buffer, len);
-}
-*/
-
-void PCM51xx::selectPage(Register address)
+void PCM51xx_selectPage(PCM51xx_* p, PCM51xx::Register address)
 {
   uint8_t page = (address >> 8) & 0xFF;
 
-  if (page != _currentPage)
+  if (page != p->_currentPage)
   {
-    I2C_start(I2CA_BASE, _i2cAddr, 0);
+    I2C_start(I2CA_BASE, p->_i2cAddr, 0);
     I2C_write(I2CA_BASE, 0, 0);
     I2C_write(I2CA_BASE, page, 1);
 
@@ -262,6 +240,6 @@ void PCM51xx::selectPage(Register address)
     // _wire->write(page);
     // _wire->endTransmission();
 
-    _currentPage = page;
+    p->_currentPage = page;
   }
 }

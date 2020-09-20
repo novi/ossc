@@ -150,15 +150,15 @@ C_SRCS += it6613/it6613_drv.c
 C_SRCS += it6613/it6613_sys.c
 C_SRCS += tvp7002/tvp7002.c
 C_SRCS += tvp7002/video_modes.c
-C_SRCS += ths7353/ths7353.c
-C_SRCS += pcm1862/pcm1862.c
-C_SRCS += spi_charlcd/lcd.c
+#C_SRCS += ths7353/ths7353.c
+#C_SRCS += pcm1862/pcm1862.c
+#C_SRCS += spi_charlcd/lcd.c
 C_SRCS += memory/flash.c
-C_SRCS += memory/sdcard.c
+#C_SRCS += memory/sdcard.c
 C_SRCS += ossc/av_controller.c
 C_SRCS += ossc/avconfig.c
 C_SRCS += ossc/controls.c
-C_SRCS += ossc/firmware.c
+#C_SRCS += ossc/firmware.c
 ifeq ($(OSDLANG),JP)
 C_SRCS += ossc/menu_sjis.c
 else
@@ -166,8 +166,8 @@ C_SRCS += ossc/menu.c
 endif
 C_SRCS += ossc/userdata.c
 C_SRCS += ossc/utils.c
-C_SRCS += ulibSD/sd_io.c
-C_SRCS += ulibSD/spi_io.c
+#C_SRCS += ulibSD/sd_io.c
+#C_SRCS += ulibSD/spi_io.c
 C_SRCS += soundbox/soundbox.c
 CXX_SRCS :=
 CXX_SRCS += pcm5122/pcm5122.cpp
