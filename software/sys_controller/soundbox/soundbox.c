@@ -1,7 +1,7 @@
 #include "soundbox.h"
 #include "pcm5122.h"
+#include "tlv320adc3100.h"
 #include "sysconfig.h" // for printf
-
 
 void soundbox_init()
 {
@@ -12,4 +12,5 @@ void soundbox_init()
 
     // TODO:
     pcm5122_set_volume(48); // 48 = 0dB, 255 = inf dB(mute)
+    printf("audio adc init = 0x%02x\n", tlv320adc_init());
 }

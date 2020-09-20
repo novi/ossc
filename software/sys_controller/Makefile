@@ -169,6 +169,7 @@ C_SRCS += ossc/utils.c
 #C_SRCS += ulibSD/sd_io.c
 #C_SRCS += ulibSD/spi_io.c
 C_SRCS += soundbox/soundbox.c
+C_SRCS += tlv320/tlv320adc3100.c
 CXX_SRCS :=
 CXX_SRCS += pcm5122/pcm5122.cpp
 CXX_SRCS += pcm5122/PCM51xx.cpp
@@ -214,6 +215,7 @@ SYS_LIB :=
 BSP_ROOT_DIR := ../sys_controller_bsp/
 
 # List of application specific include directories, library directories and library names
+APP_INCLUDE_DIRS += tlv320
 APP_INCLUDE_DIRS += pcm5122
 APP_INCLUDE_DIRS += soundbox
 APP_INCLUDE_DIRS += it6613
