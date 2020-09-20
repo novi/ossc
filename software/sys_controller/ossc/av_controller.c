@@ -42,6 +42,7 @@
 #include "hdmitx.h"
 #include "sd_io.h"
 #include "sys/alt_timestamp.h"
+#include "soundbox.h"
 
 #define STABLE_THOLD            1
 #define MIN_LINES_PROGRESSIVE   200
@@ -822,6 +823,8 @@ int init_hw()
     }
 
     InitIT6613();
+
+    soundbox_init();
 
 #ifdef ENABLE_AUDIO
     if (pcm1862_init()) {
