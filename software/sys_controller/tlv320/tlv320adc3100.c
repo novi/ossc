@@ -16,7 +16,7 @@ uint8_t tlv320adc_reg_read(uint8_t reg)
     return I2C_read(I2CA_BASE, 1);
 }
 
-uint8_t tlv320_set_page(uint8_t page)
+void tlv320_set_page(uint8_t page)
 {
     I2C_start(I2CA_BASE, TLV320ADDR, 0);
     I2C_write(I2CA_BASE, 0, 0);

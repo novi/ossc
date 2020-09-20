@@ -1004,6 +1004,8 @@ int main()
 
     // Mainloop
     while(1) {
+        soundbox_loop_tick();
+
         // Read remote control and PCB button status
         input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
         remote_code = input_vec & RC_MASK;

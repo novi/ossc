@@ -35,8 +35,10 @@ uint8_t ReadGPIO(MCU_Pin pin);
 
 void MX_GPIO_Init(void);
 void MX_I2C2_Init(void);
+void MX_I2C2_DeInit(void);
 void MX_SPI1_Init(void);
 
+I2C_HandleTypeDef hi2c2;
 
 #ifdef __cplusplus
 }

@@ -3,7 +3,7 @@
 
 
 void soundbox_init();
-
+void soundbox_loop_tick();
 
 
 #endif // SOUNDBOX_H_

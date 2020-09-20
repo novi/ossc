@@ -75,6 +75,7 @@ int main(void)
 	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 
 	int j = 0;
+	uint8_t i2c_buf;
 	while(1)
 	{
 		if (i++ > 150000) {
@@ -85,7 +86,43 @@ int main(void)
 				latest_ossc_power_state
 			);			
 		}
-			
+
+		// uint8_t pb3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
+		// uint8_t pb10 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10);
+		// LOG("pb3=%d, pb10=%d", pb3, pb10);
+
+		// if (pb10 && pb3) {
+		// 	HAL_Delay(100);
+		// 	pb3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
+		// 	pb10 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10);
+		// 	if (pb3 && pb10) {
+		// 		i2c_buf = 0;
+		// 		MX_I2C2_Init();
+		// 		HAL_StatusTypeDef i2cStatusRx = HAL_I2C_Slave_Receive(&hi2c2, &i2c_buf, 1, 1000);
+		// 		LOG("i2c recv 0x%02x, status=%d", i2c_buf, i2cStatusRx);
+		// 		if (i2cStatusRx == HAL_OK) {
+		// 			HAL_StatusTypeDef i2cStatusTx = HAL_I2C_Slave_Transmit(&hi2c2, &i2c_buf, 1, 1000);
+		// 			LOG("i2c sent, status=%d", i2c_buf, i2cStatusTx);
+		// 		}
+		// 	} else {
+		// 		MX_I2C2_DeInit();
+		// 	}
+		// } else {
+		// 	MX_I2C2_DeInit();
+		// }
+
+		i2c_buf = 0;
+		HAL_StatusTypeDef i2cStatusRx = HAL_I2C_Slave_Receive(&hi2c2, &i2c_buf, 1, 5000);
+		LOG("i2c recv %d, status=%d", i2c_buf, i2cStatusRx);
+		if (i2cStatusRx == HAL_OK) {
+			//HAL_StatusTypeDef i2cStatusTx = HAL_I2C_Slave_Transmit(&hi2c2, &i2c_buf, 1, 1000);
+			//LOG("i2c sent, status=%d", i2cStatusTx);
+		} else {
+			// read failure
+			MX_I2C2_DeInit();
+			HAL_Delay(2000);
+			MX_I2C2_Init();
+		}
 
 		if(i > 0 && i <= 150000/2)
 			WriteGPIO(PIN_OUT_STATUS_LED, 0);
