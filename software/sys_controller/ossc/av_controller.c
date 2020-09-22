@@ -1002,6 +1002,8 @@ int main()
     // start timer for auto input
     alt_timestamp_start();
 
+    target_input = AV3_RGBHV; // default input
+
     // Mainloop
     while(1) {
         soundbox_loop_tick();

@@ -223,12 +223,6 @@ set_location_assignment PIN_85 -to mc_ss
 set_location_assignment PIN_83 -to mc_sck
 set_location_assignment PIN_77 -to mc_mosi
 set_location_assignment PIN_80 -to mc_miso
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_miso
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_mosi
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_sck
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mc_ss
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mic_data
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to mic_lrck
 set_location_assignment PIN_86 -to mic_bclk
 set_location_assignment PIN_98 -to audio_bclk
 set_global_assignment -name VERILOG_FILE rtl/nextasic/util.v
@@ -236,7 +230,6 @@ set_global_assignment -name VERILOG_FILE rtl/nextasic/sender.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/receiver.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/openc.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/opdec.v
-set_global_assignment -name VERILOG_FILE rtl/nextasic/nextasic.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/keyboard.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/i2s.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/attenuation.v
