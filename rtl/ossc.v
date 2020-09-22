@@ -85,6 +85,7 @@ wire ir_rx;
 assign ir_rx = 0;
 wire [1:0] btn;
 assign btn = 2'b11;
+reg is_mono = 1;
 
 NextSoundBox nextsb(
     from_kb,
@@ -178,9 +179,16 @@ begin
         VSYNC_in_L <= 1'b0;
         FID_in_L <= 1'b0;
     end else begin
-        R_in_L <= R_in;
+        // NeXT Sound Box mono mode
+        if (is_mono) begin
+            R_in_L <= G_in;
+            B_in_L <= G_in;
+        end else begin
+            R_in_L <= R_in;
+            B_in_L <= B_in;
+        end
+        // NeXT Sound Box mono mode
         G_in_L <= G_in;
-        B_in_L <= B_in;
         HSYNC_in_L <= HSYNC_in;
         VSYNC_in_L <= VSYNC_in;
         FID_in_L <= FID_in;
