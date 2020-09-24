@@ -22,7 +22,7 @@
 
 typedef enum {
   PIN_IN_USB_FAULT, // PC9
-  PIN_OUT_USB_ENABLE, // PC8, negative logic
+  PIN_OUT_USB_ENABLE, // PC8
   PIN_IN_OSSC_POWER, // PC12
   PIN_OUT_MONOUT_INTERFACE_ENABLE, // PC5, negative logic, open-drain
   PIN_OUT_NEXT_POWERSW, // PC4
@@ -37,6 +37,8 @@ void MX_GPIO_Init(void);
 void MX_I2C2_Init(void);
 void MX_I2C2_DeInit(void);
 void MX_SPI1_Init(void);
+
+void clear_i2c_intr_counter();
 
 I2C_HandleTypeDef hi2c2;
 

@@ -14,7 +14,9 @@ USBH_HandleTypeDef hUSBHost[5];
 static void USBH_UserProcess (USBH_HandleTypeDef *pHost, uint8_t vId);
 static void hub_process();
 void SystemClock_Config(void);
-void update_mon_out_interface();
+static void update_mon_out_interface();
+
+static uint32_t i2c_latest_active_tick = 0;
 
 static uint8_t latest_ossc_power_state = 0;
 
@@ -23,24 +25,99 @@ volatile void OnOSSCPowerChanged()
 	update_mon_out_interface();
 }
 
-void update_mon_out_interface()
+static void update_mon_out_interface()
 {
 	latest_ossc_power_state = ReadGPIO(PIN_IN_OSSC_POWER);
 	WriteGPIO(PIN_OUT_MONOUT_INTERFACE_ENABLE, 1);
 }
 
-void update_usb_host_power()
+static void update_usb_host_power()
 {
-	WriteGPIO(PIN_OUT_USB_ENABLE, 0);
+	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 }
 
-void init_gpio_value()
+static void init_gpio_value()
 {
 	WriteGPIO(PIN_OUT_NEXT_POWERSW, 0);
 	WriteGPIO(PIN_OUT_SPI_SS, 0);
 	WriteGPIO(PIN_OUT_STATUS_LED, 0);
 	update_usb_host_power();
 	update_mon_out_interface();
+}
+
+static uint8_t i2c_buf;
+
+static void recv_i2c_slave()
+{
+	HAL_I2C_Slave_Receive_IT(&hi2c2, &i2c_buf, 1);
+}
+
+static void send_i2c_slave()
+{
+	HAL_I2C_Slave_Transmit_IT(&hi2c2, &i2c_buf, 1);
+}
+
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c->Instance == hi2c2.Instance) {
+		clear_i2c_intr_counter();
+		i2c_latest_active_tick = HAL_GetTick();
+		LOG("i2c recv done. data = %d, tick = %d", i2c_buf, HAL_GetTick());
+		// send_i2c_slave();
+		recv_i2c_slave();
+	}
+}
+
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c->Instance == hi2c2.Instance) {
+		clear_i2c_intr_counter();
+		i2c_latest_active_tick = HAL_GetTick();
+		LOG("i2c sent. data = %d, tick = %d", i2c_buf, HAL_GetTick());
+		recv_i2c_slave();
+	}
+}
+
+void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	LOG("i2c abort");
+	if (hi2c->Instance == hi2c2.Instance) {
+		recv_i2c_slave();
+	}
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+	LOG("i2c error");
+	if (hi2c->Instance == hi2c2.Instance) {
+		recv_i2c_slave();
+	}
+}
+
+static void start_i2c()
+{
+	MX_I2C2_Init();
+	recv_i2c_slave();
+	i2c_latest_active_tick = HAL_GetTick();
+}
+
+static void check_i2c_activity()
+{
+	uint32_t current = HAL_GetTick();
+	// LOG("tick %d, %d", i2c_latest_active_tick, current);
+	if (current >= i2c_latest_active_tick) {
+		if (current - i2c_latest_active_tick > 5*1000) { // no activity threshold
+			LOG("no i2c activity, resetting...");
+			// reset i2c
+			MX_I2C2_DeInit(); // disable i2c pins
+			HAL_Delay(3*1000);
+			NVIC_SystemReset();
+		}
+	} else {
+		// tick reset, check for next tick
+		i2c_latest_active_tick = current;
+		return;
+	}
 }
 
 int main(void)
@@ -53,7 +130,14 @@ int main(void)
 	MX_GPIO_Init();
 	init_gpio_value();
 	LOG_INIT(USARTx, 115200);
-	MX_I2C2_Init();
+
+	LOG("wait for ossc boot up");
+	HAL_Delay(3*1000);
+
+	// i2c slave
+	start_i2c();
+
+	// spi master
 	MX_SPI1_Init();
 
 	// LOG("\033[2J\033[H");
@@ -74,10 +158,14 @@ int main(void)
 	USBH_Start(&hUSBHost[0]);
 	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 
+	LOG("start");
+
 	int j = 0;
-	uint8_t i2c_buf;
+	//uint8_t i2c_buf;
 	while(1)
 	{
+		check_i2c_activity();
+
 		if (i++ > 150000) {
 			i = 0;
 			j++;
@@ -85,43 +173,6 @@ int main(void)
 				ReadGPIO(PIN_IN_USB_FAULT),
 				latest_ossc_power_state
 			);			
-		}
-
-		// uint8_t pb3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
-		// uint8_t pb10 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10);
-		// LOG("pb3=%d, pb10=%d", pb3, pb10);
-
-		// if (pb10 && pb3) {
-		// 	HAL_Delay(100);
-		// 	pb3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
-		// 	pb10 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10);
-		// 	if (pb3 && pb10) {
-		// 		i2c_buf = 0;
-		// 		MX_I2C2_Init();
-		// 		HAL_StatusTypeDef i2cStatusRx = HAL_I2C_Slave_Receive(&hi2c2, &i2c_buf, 1, 1000);
-		// 		LOG("i2c recv 0x%02x, status=%d", i2c_buf, i2cStatusRx);
-		// 		if (i2cStatusRx == HAL_OK) {
-		// 			HAL_StatusTypeDef i2cStatusTx = HAL_I2C_Slave_Transmit(&hi2c2, &i2c_buf, 1, 1000);
-		// 			LOG("i2c sent, status=%d", i2c_buf, i2cStatusTx);
-		// 		}
-		// 	} else {
-		// 		MX_I2C2_DeInit();
-		// 	}
-		// } else {
-		// 	MX_I2C2_DeInit();
-		// }
-
-		i2c_buf = 0;
-		HAL_StatusTypeDef i2cStatusRx = HAL_I2C_Slave_Receive(&hi2c2, &i2c_buf, 1, 5000);
-		LOG("i2c recv %d, status=%d", i2c_buf, i2cStatusRx);
-		if (i2cStatusRx == HAL_OK) {
-			//HAL_StatusTypeDef i2cStatusTx = HAL_I2C_Slave_Transmit(&hi2c2, &i2c_buf, 1, 1000);
-			//LOG("i2c sent, status=%d", i2cStatusTx);
-		} else {
-			// read failure
-			MX_I2C2_DeInit();
-			HAL_Delay(2000);
-			MX_I2C2_Init();
 		}
 
 		if(i > 0 && i <= 150000/2)

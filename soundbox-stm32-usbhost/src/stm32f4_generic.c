@@ -82,7 +82,7 @@ void WriteGPIO(MCU_Pin pin, uint8_t value)
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
     case PIN_OUT_USB_ENABLE:
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, (!value) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
     default:
     break;
@@ -220,6 +220,10 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 
     /* Peripheral clock enable */
     __HAL_RCC_I2C2_CLK_ENABLE();
+    /* I2C2 interrupt Init */
+    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+
   /* USER CODE BEGIN I2C2_MspInit 1 */
 
   /* USER CODE END I2C2_MspInit 1 */
@@ -302,4 +306,22 @@ void EXTI15_10_IRQHandler(void)
 {
   OnOSSCPowerChanged();
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+}
+
+volatile uint32_t i2c_intr_count = 0;
+
+inline void clear_i2c_intr_counter()
+{
+  i2c_intr_count = 0;
+}
+
+void I2C2_EV_IRQHandler(void)
+{
+  if (i2c_intr_count > 100) {
+    HAL_NVIC_DisableIRQ(I2C2_EV_IRQn);
+  } else {
+    i2c_intr_count++;
+    HAL_I2C_EV_IRQHandler(&hi2c2);
+  }
+  
 }
