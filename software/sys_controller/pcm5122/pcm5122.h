@@ -7,9 +7,14 @@
 extern "C" {
 #endif
 
-uint8_t pcm5122_init();
+uint8_t pcm5122_init(); // if returns 0, it is success
 uint8_t pcm5122_get_powerstate();
 void pcm5122_set_volume(uint8_t value);
+uint8_t pcm5122_get_current_samplerate();
+uint16_t pcm5122_get_bck_state();
+uint8_t pcm5122_get_clock_state();
+uint8_t pcm5122_get_clock_error();
+uint8_t pcm5122_get_mute_state();
 
 #ifdef __cplusplus
 };

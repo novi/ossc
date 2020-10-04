@@ -19,3 +19,27 @@ void pcm5122_set_volume(uint8_t value)
     PCM51xx_setVolume(&pcm5122, value);
 }
 
+uint8_t pcm5122_get_current_samplerate()
+{
+    return PCM51xx_getCurrentSampleRate(&pcm5122);
+}
+
+uint16_t pcm5122_get_bck_state()
+{
+    return PCM51xx_getBckState(&pcm5122);
+}
+
+uint8_t pcm5122_get_clock_state()
+{
+    return PCM51xx_getClockState(&pcm5122);
+}
+
+uint8_t pcm5122_get_clock_error()
+{
+    return PCM51xx_getClockErrorState(&pcm5122); 
+}
+
+uint8_t pcm5122_get_mute_state()
+{
+    return PCM51xx_getMuteState(&pcm5122);
+}

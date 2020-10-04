@@ -38,6 +38,7 @@ public:
     SAMPLE_RATE_32K       = 32000,
     SAMPLE_RATE_44_1K     = 44100,
     SAMPLE_RATE_48K       = 48000,
+    SAMPLE_RATE_88_2K     = 88200,
     SAMPLE_RATE_96K       = 96000,
     SAMPLE_RATE_192K      = 192000,
     SAMPLE_RATE_384K      = 384000
@@ -240,8 +241,13 @@ typedef struct PCM51xx_s {
 } PCM51xx_;
 
 void PCM51xx_PCM51xx(PCM51xx_* p, uint8_t i2cAddr);
-bool PCM51xx_begin(PCM51xx_* p, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps);
+uint8_t PCM51xx_begin(PCM51xx_* p, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps);
 PCM51xx::PowerState PCM51xx_getPowerState(PCM51xx_* p);
 void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol);
+uint8_t PCM51xx_getCurrentSampleRate(PCM51xx_* p);
+uint16_t PCM51xx_getBckState(PCM51xx_* p);
+uint8_t PCM51xx_getClockState(PCM51xx_* p);
+uint8_t PCM51xx_getClockErrorState(PCM51xx_* p);
+uint8_t PCM51xx_getMuteState(PCM51xx_* p);
 
 #endif //PCM51XX_H
