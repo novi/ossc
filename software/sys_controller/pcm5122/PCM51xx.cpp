@@ -94,8 +94,6 @@ bool PCM51xx_begin_bitDepth(PCM51xx_* p, PCM51xx::BitDepth bps)
 
 uint8_t PCM51xx_begin(PCM51xx_* handle, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps)
 {
-  // return 111;
-
   //See here : https://e2e.ti.com/support/data_converters/audio_converters/f/64/t/428281
   // for a config example
 

@@ -27,7 +27,7 @@ module NextSoundBox (
     // dummy
     // assign to_kb = from_kb;
     // assign from_mon = mon_clk | to_mon;
-    assign spdif_led0 = 0;
+    assign spdif_led0 = from_mon;
     assign mc_miso = mc_sck | mc_mosi | mc_ss;
     // assign audio_data = mic_bclk | mic_lrck | mic_data | audio_mclk;
     // assign audio_bclk = audio_mclk;
