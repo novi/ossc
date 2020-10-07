@@ -782,14 +782,16 @@ int init_hw()
     alt_u32 chiprev;
 
     // Reset hardware
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
+    // IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N); // for Sound Box
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x0000);
     sc->h_config.data = 0x00000000;
     sc->v_config.data = 0x00000000;
     usleep(10000);
 
     // unreset hw
-    sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT;
+    // sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT;
+    sys_ctrl = AV_RESET_N|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT; // for Sound Box
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     // Reload initial PLL config (needed after jtagm_reset_req if config has changed).

@@ -179,7 +179,7 @@ int parse_control()
             lcd_write_menu();
             break;
         case RC_LCDBL:
-            sys_ctrl ^= LCD_BL;
+            // sys_ctrl ^= LCD_BL; // disabled for Sound Box
             break;
         case RC_SL_MODE: tc.sl_mode = (tc.sl_mode < SL_MODE_MAX) ? (tc.sl_mode + 1) : 0; break;
         case RC_SL_TYPE: tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0; break;

@@ -58,7 +58,7 @@ module ossc (
     input mon_clk,
     input to_mon,
     output from_mon,
-    output spdif_led0,
+    output spdif_led0_out,
     input mc_sck,
     input mc_mosi,
     input mc_ss,
@@ -86,6 +86,17 @@ assign ir_rx = 0;
 wire [1:0] btn;
 assign btn = 2'b11;
 reg is_mono = 1;
+
+wire lcd_bl_on, spdif_led0;
+assign lcd_bl_on = 0;
+assign LCD_RS = 0;
+
+always@ (*) begin
+	if (sys_ctrl[4]) // use led from software
+		spdif_led0_out = sys_ctrl[5];
+	else
+		spdif_led0_out = spdif_led0;
+end
 
 NextSoundBox nextsb(
     from_kb,
@@ -179,7 +190,7 @@ begin
         VSYNC_in_L <= 1'b0;
         FID_in_L <= 1'b0;
     end else begin
-        // NeXT Sound Box mono mode
+        // NeXT Sound Box mono mode start
         if (is_mono) begin
             R_in_L <= G_in;
             B_in_L <= G_in;
@@ -187,7 +198,7 @@ begin
             R_in_L <= R_in;
             B_in_L <= B_in;
         end
-        // NeXT Sound Box mono mode
+        // NeXT Sound Box mono mode end
         G_in_L <= G_in;
         HSYNC_in_L <= HSYNC_in;
         VSYNC_in_L <= VSYNC_in;
@@ -241,8 +252,8 @@ assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0);
 
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
 assign LCD_CS_N = sys_ctrl[6];
-assign LCD_RS = sys_ctrl[5];
-wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
+// assign LCD_RS = sys_ctrl[5];
+// wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
 wire [1:0] lcd_bl_time = sys_ctrl[3:2];
 assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 

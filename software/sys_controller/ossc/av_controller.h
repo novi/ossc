@@ -39,6 +39,9 @@
 #define VIDGEN_OFF                  (1<<1)
 #define AV_RESET_N                  (1<<0)
 
+// Sound Box added
+
+
 #define LT_CTRL_MASK    0xf000
 
 // HDMI_TX definitions
