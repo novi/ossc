@@ -225,6 +225,7 @@ set_location_assignment PIN_77 -to mc_mosi
 set_location_assignment PIN_80 -to mc_miso
 set_location_assignment PIN_86 -to mic_bclk
 set_location_assignment PIN_98 -to audio_bclk
+set_global_assignment -name VERILOG_FILE rtl/sb_top.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/util.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/sender.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/receiver.v
@@ -233,7 +234,6 @@ set_global_assignment -name VERILOG_FILE rtl/nextasic/opdec.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/keyboard.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/i2s.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/attenuation.v
-set_global_assignment -name VERILOG_FILE rtl/next_top.v
 set_global_assignment -name VERILOG_FILE rtl/videogen.v
 set_global_assignment -name VERILOG_FILE rtl/ir_rcv.v
 set_global_assignment -name VERILOG_FILE rtl/ossc.v
