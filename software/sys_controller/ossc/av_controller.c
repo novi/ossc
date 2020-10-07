@@ -876,8 +876,8 @@ int init_hw()
     osd->osd_config.status_timeout = osd_status_timeout;
 
     // Setup remote keymap
-    if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
-        setup_rc();
+    // if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
+    //     setup_rc(); // disabled for Sound Box
 
     // init always in HDMI mode (fixes yellow screen bug)
     cm.hdmitx_vic = HDMI_480p60;
@@ -1073,7 +1073,7 @@ int main()
             alt_timestamp_start();
         }
 
-        man_input_change = parse_control();
+        man_input_change = 0; // parse_control(); disabled for SoundBox
 
         if (menu_active)
             display_menu(0);

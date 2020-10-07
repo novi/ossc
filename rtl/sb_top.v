@@ -20,7 +20,10 @@ module NextSoundBox (
     input audio_mclk,
     output audio_bclk,
     output audio_lrck,
-    output audio_data
+    output audio_data,
+	
+	output [15:0] latest_keycode,
+	output latest_keycode_valid
 );
 
 
@@ -116,6 +119,9 @@ module NextSoundBox (
         0,
         power_on_packet_S1
     );
+    
+    assign latest_keycode = keyboard_data;
+    assign latest_keycode_valid = keyboard_data_ready & (~is_mouse_data);
     
     OpEncoder op_enc(
         power_on_packet_S1,

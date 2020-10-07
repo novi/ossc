@@ -4,10 +4,6 @@
 #include "system.h"
 #include "i2c_opencores.h"
 
-// sys_ctrl bits for SoundBox
-#define CONTROL_LED_FROM_SOFTWARE   (1<<4)
-#define LED_ON                      (1<<5)
-
 #define MCU_I2C_ADDR (0x98>>1)
 
 uint8_t mcu_init()

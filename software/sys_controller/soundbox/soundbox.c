@@ -2,8 +2,17 @@
 #include "pcm5122.h"
 #include "tlv320adc3100.h"
 #include "sysconfig.h" // for printf
+#include "system.h"
+#include "altera_avalon_pio_regs.h"
 #include "mcu.h"
 #include <unistd.h>
+
+// sys_ctrl bits for SoundBox
+#define CONTROL_LED_FROM_SOFTWARE   (1<<4)
+#define LED_ON                      (1<<5)
+
+// pio input bits
+#define KEYCODE_MASK             0x0000ffff
 
 void soundbox_init()
 {
@@ -39,5 +48,8 @@ void soundbox_loop_tick()
     pcm5122_get_clock_error(),
     pcm5122_get_mute_state() );
 
-    pcm5122_set_volume(80);
+    pcm5122_set_volume(60);
+
+    uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
+    printf("latest keycode = 0x%04x\n", pioin & KEYCODE_MASK);
 }
