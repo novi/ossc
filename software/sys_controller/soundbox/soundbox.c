@@ -12,7 +12,10 @@
 #define LED_ON                      (1<<5)
 
 // pio input bits
-#define KEYCODE_MASK             0x0000ffff
+#define KEYCODE_MASK            0x0000ffff
+#define VOLUME_MASK             0xfff00000
+#define VOLUME_MASK_SHIFT       (20)
+#define IS_MUTED_BIT            0x00010000
 
 void soundbox_init()
 {
@@ -51,5 +54,9 @@ void soundbox_loop_tick()
     pcm5122_set_volume(60);
 
     uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
-    printf("latest keycode = 0x%04x\n", pioin & KEYCODE_MASK);
+    uint16_t volume = pioin >> VOLUME_MASK_SHIFT;
+    uint8_t vol_l = (volume >> 6) & 0x3f;
+    uint8_t vol_r = (volume) & 0x3f;
+    uint8_t is_muted = (pioin & IS_MUTED_BIT) ? 1 : 0;
+    printf("latest keycode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", pioin & KEYCODE_MASK, vol_l, vol_r, is_muted);
 }

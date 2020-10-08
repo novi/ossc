@@ -1013,8 +1013,8 @@ int main()
         // Read remote control and PCB button status
         input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
         remote_code = input_vec & RC_MASK;
-        btn_code = ~input_vec & PB_MASK;
-        remote_rpt = input_vec >> 24;
+        btn_code = 0; // ~input_vec & PB_MASK; disabled for Sound Box
+        remote_rpt = 0; // input_vec >> 24; disabled for Sound Box
 
         if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
             remote_code = 0;

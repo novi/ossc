@@ -21,20 +21,18 @@ module NextSoundBox (
     output audio_bclk,
     output audio_lrck,
     output audio_data,
-	
-	output [15:0] latest_keycode,
-	output latest_keycode_valid
+
+    output [15:0] latest_keycode,
+    output latest_keycode_valid,
+    output is_muted,
+    output [11:0] volume_db, // Lch, Rch
+    output volume_db_valid
 );
 
 
     // dummy
-    // assign to_kb = from_kb;
-    // assign from_mon = mon_clk | to_mon;
     assign spdif_led0 = from_mon;
     assign mc_miso = mc_sck | mc_mosi | mc_ss;
-    // assign audio_data = mic_bclk | mic_lrck | mic_data | audio_mclk;
-    // assign audio_bclk = audio_mclk;
-    // assign audio_lrck = audio_data;
     
     wire [39:0] in_data;
     wire data_recv;
@@ -96,18 +94,14 @@ module NextSoundBox (
         //debug_test_pins[4:0]
     );
     
-    wire is_muted, db_val_valid;
-    wire [5:0] lch_db;
-    wire [5:0] rch_db;
-    wire [7:0] att_debug_out;
     Attenuation att(
         mon_clk,
         attenuation_data_valid,
         attenuation_data,
         is_muted,
-        lch_db,
-        rch_db,
-        db_val_valid
+        volume_db[11:6],
+        volume_db[5:0],
+        volume_db_valid
     );
     
     wire [39:0] out_data;
