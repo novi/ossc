@@ -18,3 +18,4 @@ software/sys_controller/sys_controller.map
 software/sys_controller/sys_controller.elf
 .qsys_edit/*
 PLLJ_PLLSPE_INFO.txt
+simulation/

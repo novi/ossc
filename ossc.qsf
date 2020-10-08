@@ -41,13 +41,13 @@ set_global_assignment -name DEVICE EP4CE15E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY ossc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:27:03  MAY 17, 2014"
-set_global_assignment -name LAST_QUARTUS_VERSION "19.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
-set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
-set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
@@ -225,6 +225,7 @@ set_location_assignment PIN_77 -to mc_mosi
 set_location_assignment PIN_80 -to mc_miso
 set_location_assignment PIN_86 -to mic_bclk
 set_location_assignment PIN_98 -to audio_bclk
+set_global_assignment -name VERILOG_FILE rtl/nextasic/data_sync.v
 set_global_assignment -name VERILOG_FILE rtl/sb_top.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/util.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/sender.v
@@ -251,4 +252,16 @@ set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 set_global_assignment -name QIP_FILE rtl/char_array.qip
+set_global_assignment -name EDA_TIME_SCALE "1 ns" -section_id eda_simulation
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_timing
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_symbol
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_signal_integrity
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_boundary_scan
+set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH soundbox -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_NAME soundbox -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME dummy -section_id soundbox
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/data_sync.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/util.v -section_id soundbox
