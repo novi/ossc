@@ -15,6 +15,7 @@ static void USBH_UserProcess (USBH_HandleTypeDef *pHost, uint8_t vId);
 static void hub_process();
 void SystemClock_Config(void);
 static void update_mon_out_interface();
+static void start_i2c();
 
 static uint32_t i2c_latest_active_tick = 0;
 
@@ -22,13 +23,13 @@ static uint8_t latest_ossc_power_state = 0;
 
 volatile void OnOSSCPowerChanged()
 {
-	update_mon_out_interface();
+	// update_mon_out_interface(); disable, now check on main loop
 }
 
 static void update_mon_out_interface()
 {
 	latest_ossc_power_state = ReadGPIO(PIN_IN_OSSC_POWER);
-	WriteGPIO(PIN_OUT_MONOUT_INTERFACE_ENABLE, 1);
+	WriteGPIO(PIN_OUT_MONOUT_INTERFACE_ENABLE, latest_ossc_power_state);
 }
 
 static void update_usb_host_power()
@@ -97,22 +98,38 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 	}
 }
 
+static uint8_t i2c_started = 0;
 static void start_i2c()
 {
+	if (i2c_started) return;
+	i2c_started = 1;
 	MX_I2C2_Init();
 	recv_i2c_slave();
 	i2c_latest_active_tick = HAL_GetTick();
 }
 
+static void stop_i2c()
+{
+	if (i2c_started) {
+		i2c_started = 0;
+		MX_I2C2_DeInit(); // disable i2c pins
+	}
+}
+
 static void check_i2c_activity()
 {
 	uint32_t current = HAL_GetTick();
+	if (!latest_ossc_power_state) {
+		// LOG("ossc is turn off. skip i2c activity checking.");
+		i2c_latest_active_tick = current;
+		return;
+	}	
 	// LOG("tick %d, %d", i2c_latest_active_tick, current);
 	if (current >= i2c_latest_active_tick) {
 		if (current - i2c_latest_active_tick > 5*1000) { // no activity threshold
 			LOG("no i2c activity, resetting...");
 			// reset i2c
-			MX_I2C2_DeInit(); // disable i2c pins
+			stop_i2c();
 			HAL_Delay(3*1000);
 			NVIC_SystemReset();
 		}
@@ -134,11 +151,10 @@ int main(void)
 	init_gpio_value();
 	LOG_INIT(USARTx, 115200);
 
+#if !USE_STANDBY_5V
 	LOG("wait for ossc boot up");
 	HAL_Delay(3*1000);
-
-	// i2c slave
-	start_i2c();
+#endif
 
 	// spi master
 	MX_SPI1_Init();
@@ -167,7 +183,19 @@ int main(void)
 	//uint8_t i2c_buf;
 	while(1)
 	{
+		uint8_t old_ossc_power_state = latest_ossc_power_state;
+		update_mon_out_interface();
 		check_i2c_activity();
+		if (old_ossc_power_state != latest_ossc_power_state && latest_ossc_power_state) {
+			// ossc powered on
+			LOG("wait for ossc boot up");
+			HAL_Delay(3*1000);
+			start_i2c();
+		} else if (!latest_ossc_power_state) {
+			stop_i2c();
+		} else if (latest_ossc_power_state) {
+			start_i2c();
+		}
 
 		if (i++ > 150000) {
 			i = 0;
@@ -232,7 +260,7 @@ LOG("PROCESSING ATTACH %d", _phost->address);
 		minfo = USBH_HID_GetMouseInfo(_phost);
 		if(minfo != NULL)
 		{
-LOG("BUTTON %d", minfo->buttons[0]);
+			LOG("BUTTON (%d, %d), %d, %d", minfo->x, minfo->y, minfo->buttons[0], minfo->buttons[1]);
 		}
 		else
 		{
@@ -240,7 +268,7 @@ LOG("BUTTON %d", minfo->buttons[0]);
 			kinfo = USBH_HID_GetKeybdInfo(_phost);
 			if(kinfo != NULL)
 			{
-LOG("KEYB %d", kinfo->keys[0]);
+				LOG("KEYB %d, Modifier lgui=%d", kinfo->keys[0], kinfo->lgui);
 			}
 		}
 	}
