@@ -1,4 +1,7 @@
 module NextSoundBox (
+    input clk27, // FPGA clk,
+    input hw_reset_n, // FPGA reset
+
     input from_kb, // and BTN0
     output to_kb,
     
@@ -80,18 +83,32 @@ module NextSoundBox (
         audio_data
     );
     
-    wire [15:0] keyboard_data;
+    wire [16:0] keyboard_data_s; // FPGA clock side
+    wire [16:0] keyboard_data_n; // next hardware (mon_clk) side
     wire keyboard_data_ready, is_mouse_data;
+    assign keyboard_data_s[16] = is_mouse_data;
     Keyboard keyboard(
-        mon_clk,
-        keyboard_led_update,
-        in_data[17:16],
+        clk27, // driven by FPGA clock
+        0, // keyboard_led_update, // TODO
+        0, // in_data[17:16], // TODO
         keyboard_data_ready,
         is_mouse_data,
-        keyboard_data,
+        keyboard_data_s[15:0], // keyboard_data
         from_kb,
-        to_kb,
+        to_kb
         //debug_test_pins[4:0]
+    );
+    assign latest_keycode = keyboard_data_s[15:0];
+    assign latest_keycode_valid = keyboard_data_ready & (~is_mouse_data);
+    
+    wire keyboard_data_ready_n;
+    DataSync #(.W(17)) keyboard_data_sync (
+        clk27,
+        keyboard_data_s,
+        keyboard_data_ready,
+        mon_clk,
+        keyboard_data_n,
+        keyboard_data_ready_n
     );
     
     Attenuation att(
@@ -114,14 +131,12 @@ module NextSoundBox (
         power_on_packet_S1
     );
     
-    assign latest_keycode = keyboard_data;
-    assign latest_keycode_valid = keyboard_data_ready & (~is_mouse_data);
     
     OpEncoder op_enc(
         power_on_packet_S1,
-        keyboard_data_ready,
-        is_mouse_data,
-        keyboard_data,
+        keyboard_data_ready_n,
+        keyboard_data_n[16], // is_mouse_data
+        keyboard_data_n[15:0], // keyboard_data
         out_data,
         out_valid
     );

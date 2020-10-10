@@ -101,15 +101,12 @@ end
 wire latest_keycode_valid;
 wire [15:0] latest_keycode;
 reg [15:0] latest_keycode_L;
-reg [15:0] latest_keycode_LL; // TODO: synchronize
 always @(posedge clk27 or negedge po_reset_n)
 begin
     if (!po_reset_n) begin
         latest_keycode_L <= 16'h0000;
-        latest_keycode_LL <= 16'h0000;
-    end else if (latest_keycode_valid) begin // TODO: synchronize
+    end else if (latest_keycode_valid) begin
         latest_keycode_L <= latest_keycode;
-        latest_keycode_LL <= latest_keycode_L;
     end
 end
 
@@ -139,6 +136,8 @@ begin
 end
 
 NextSoundBox nextsb(
+    clk27,
+    hw_reset_n,
     from_kb,
     to_kb,
     mon_clk,
@@ -358,7 +357,7 @@ sys sys_inst(
     .i2c_opencores_1_export_sda_pad_io      (SD_CMD),
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
-    .pio_1_controls_in_export               ({volume_db_LL, pll_activeclock, HDMI_TX_MODE_LL, 1'b1, is_muted_LL, latest_keycode_LL}),
+    .pio_1_controls_in_export               ({volume_db_LL, pll_activeclock, HDMI_TX_MODE_LL, 1'b1, is_muted_LL, latest_keycode_L}),
     .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
     .sc_config_0_sc_if_sc_status2_i         ({12'h000, pcnt_frame}),
     .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),

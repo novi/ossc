@@ -12,8 +12,9 @@ module Keyboard(
 	output wire [4:0] debug
 );
 
-	localparam KEY_CLK = 9'd265-1; // 53us, 53us/(1/5Mhz)
-	localparam KEY_CLK_HALF = 9'd132-1; // ceil(KEY_CLK) - 1
+	localparam KEY_CLK = 11'd1431-1; // 53us, 53us/(1/5Mhz), // 53us, 53/(1/27Mhz) = 1431
+	localparam KEY_CLK_HALF = 11'd715-1; // ceil(KEY_CLK) - 1
+	localparam KEY_CNT_W = 11;
 	
 	localparam QUERY_KEYBOARD = 1'b0;
 	localparam QUERY_MOUSE = 1'b1;
@@ -30,11 +31,11 @@ module Keyboard(
 	reg is_sending = 0;
 	reg query_state = QUERY_KEYBOARD;
 	reg data_receved = 0;
-	reg [8:0] key_clk_count = 0;
+	reg [KEY_CNT_W:0] key_clk_count = 0; // for KEY_CLK
 	
 	reg is_recving = 0;
 	reg [4:0] recv_count;
-	reg [8:0] recv_delay;
+	reg [KEY_CNT_W:0] recv_delay; // for KEY_CLK
 	reg [1:0] pending_count;
 	reg can_recv_start = 0;
 	
