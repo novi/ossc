@@ -6,6 +6,7 @@
 #include "altera_avalon_pio_regs.h"
 #include "mcu.h"
 #include <unistd.h>
+#include "sys/alt_timestamp.h"
 
 // sys_ctrl bits for SoundBox
 #define CONTROL_LED_FROM_SOFTWARE   (1<<4)
@@ -16,6 +17,9 @@
 #define VOLUME_MASK             0xfff00000
 #define VOLUME_MASK_SHIFT       (20)
 #define IS_MUTED_BIT            0x00010000
+
+#define TIMESTAMP_FREQ (27) // 27Mhz (FPGA clock)
+#define TIMESTAMP_UNIT_MS (1000000)
 
 static uint8_t nextvol_to_pcmvol(uint8_t nextvol)
 {
@@ -39,15 +43,13 @@ void soundbox_init()
     printf("sound box (dac, adc, mcu) initialized.\n");
 }
 
-void soundbox_loop_tick()
+static void soundbox_loop_ping_tick()
 {
+    // send ping packet
     static uint8_t counter = 0;
     counter++;
     printf("sb loop tick %d\n", counter);
-    usleep(1000*1000); // 1sec
-
     mcu_send_data(counter);
-
 
     printf("audio sample rate = 0x%02x, bck = 0x%04x, power = 0x%02x, clock = 0x%02x, clock error = 0x%02x, mute = 0x%02x\n",
     pcm5122_get_current_samplerate(),
@@ -66,4 +68,28 @@ void soundbox_loop_tick()
     uint8_t vol_r = (volume) & 0x3f;
     uint8_t is_muted = (pioin & IS_MUTED_BIT) ? 1 : 0;
     printf("latest keycode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", keycode, vol_l, vol_r, is_muted);
+
+    // printf("timestamp = %ld, freq= %d, sizeof timestamp = %d\n", alt_timestamp(), alt_timestamp_freq(), sizeof(alt_timestamp_type));
+}
+
+static alt_timestamp_type latest_timestamp = 0;
+
+void soundbox_loop_tick()
+{
+    alt_timestamp_type current = alt_timestamp();
+    if (current == 0) {
+        alt_timestamp_start();
+        soundbox_loop_ping_tick();
+        latest_timestamp = 1;
+    } else {
+        if (latest_timestamp == 0) {
+            soundbox_loop_ping_tick();
+            latest_timestamp = alt_timestamp();
+        } else {
+            if ( current - latest_timestamp > ((1000*TIMESTAMP_UNIT_MS)/TIMESTAMP_FREQ) ) {
+                soundbox_loop_ping_tick();
+                latest_timestamp = alt_timestamp();
+            }
+        }
+    }    
 }
