@@ -243,7 +243,7 @@ typedef struct PCM51xx_s {
 void PCM51xx_PCM51xx(PCM51xx_* p, uint8_t i2cAddr);
 uint8_t PCM51xx_begin(PCM51xx_* p, PCM51xx::SamplingRate rate, PCM51xx::BitDepth bps);
 PCM51xx::PowerState PCM51xx_getPowerState(PCM51xx_* p);
-void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol);
+void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol_l, uint8_t vol_r);
 uint8_t PCM51xx_getCurrentSampleRate(PCM51xx_* p);
 uint16_t PCM51xx_getBckState(PCM51xx_* p);
 uint8_t PCM51xx_getClockState(PCM51xx_* p);

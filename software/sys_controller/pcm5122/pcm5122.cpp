@@ -14,9 +14,9 @@ uint8_t pcm5122_get_powerstate()
     return (uint8_t)PCM51xx_getPowerState(&pcm5122);
 }
 
-void pcm5122_set_volume(uint8_t value)
+void pcm5122_set_volume(uint8_t l, uint8_t r)
 {
-    PCM51xx_setVolume(&pcm5122, value);
+    PCM51xx_setVolume(&pcm5122, l, r);
 }
 
 uint8_t pcm5122_get_current_samplerate()

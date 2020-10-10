@@ -127,7 +127,7 @@ uint8_t PCM51xx_begin(PCM51xx_* handle, PCM51xx::SamplingRate rate, PCM51xx::Bit
   // PCM51xx_writeRegister(handle, PCM51xx::PLL_CLOCK_SOURCE, 0x10);  // Set PLL clock source to BCK
   PCM51xx_writeRegister(handle, PCM51xx::DAC_CLOCK_SOURCE, 0x30); // Set DAC clock source to MCK
   
-  PCM51xx_writeRegister(handle, PCM51xx::DIGITAL_VOLUME_CTRL, 1); // Right channel volume follows left channel setting
+  // PCM51xx_writeRegister(handle, PCM51xx::DIGITAL_VOLUME_CTRL, 1); // Right channel volume follows left channel setting
 
   PCM51xx_writeRegister(handle, PCM51xx::DIGITAL_VOLUME_RAMP, 0xff);
   PCM51xx_writeRegister(handle, PCM51xx::DIGITAL_VOLUME_EMERG, 0xf0);
@@ -235,10 +235,10 @@ PCM51xx::PowerState PCM51xx_getPowerState(PCM51xx_* p)
   return (PCM51xx::PowerState)(regValue & 0x0F);
 }
 
-void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol)
+void PCM51xx_setVolume(PCM51xx_* p, uint8_t vol_l, uint8_t vol_r)
 {
-  PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_L, vol);
-  // PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_R, vol); // right channel follows left channel
+  PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_L, vol_l);
+  PCM51xx_writeRegister(p, PCM51xx::DIGITAL_VOLUME_R, vol_r);
 }
 
 void PCM51xx_writeRegister(PCM51xx_* p, PCM51xx::Register address, uint8_t data)

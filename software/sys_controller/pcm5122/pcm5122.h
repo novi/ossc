@@ -9,7 +9,7 @@ extern "C" {
 
 uint8_t pcm5122_init(); // if returns 0, it is success
 uint8_t pcm5122_get_powerstate();
-void pcm5122_set_volume(uint8_t value);
+void pcm5122_set_volume(uint8_t l, uint8_t r);
 uint8_t pcm5122_get_current_samplerate();
 uint16_t pcm5122_get_bck_state();
 uint8_t pcm5122_get_clock_state();

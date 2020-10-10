@@ -121,8 +121,8 @@ begin
     if (!po_reset_n) begin
         is_muted_L <= 1'b1;
         is_muted_LL <= 1'b1;
-        volume_db_L <= 12'h000;
-        volume_db_LL <= 12'h000;
+        volume_db_L <= 12'hfff;
+        volume_db_LL <= 12'hfff;
     end else begin
         is_muted_L <= is_muted;
         is_muted_LL <= is_muted_L;
