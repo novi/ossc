@@ -45,11 +45,12 @@ static void init_gpio_value()
 	update_mon_out_interface();
 }
 
+static uint8_t i2c_recv_buf[3];
 static uint8_t i2c_buf;
 
 static void recv_i2c_slave()
 {
-	HAL_I2C_Slave_Receive_IT(&hi2c2, &i2c_buf, 1);
+	HAL_I2C_Slave_Receive_IT(&hi2c2, i2c_recv_buf, 3);
 }
 
 static void send_i2c_slave()
@@ -62,7 +63,9 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	if (hi2c->Instance == hi2c2.Instance) {
 		clear_i2c_intr_counter();
 		i2c_latest_active_tick = HAL_GetTick();
-		LOG("i2c recv done. data = %d, tick = %d", i2c_buf, HAL_GetTick());
+		LOG("i2c recv done. data0 = %d, data1 = %d, data2 = %d, tick = %d", i2c_recv_buf[0],
+		i2c_recv_buf[1], i2c_recv_buf[2],
+		HAL_GetTick());
 		// send_i2c_slave();
 		recv_i2c_slave();
 	}
