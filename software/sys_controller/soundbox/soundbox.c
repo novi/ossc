@@ -13,7 +13,7 @@
 #define LED_ON                      (1<<5)
 
 // pio input bits
-#define KEYCODE_MASK            0x0000ffff
+#define SCANCODE_MASK            0x0000ffff
 #define VOLUME_MASK             0xfff00000
 #define VOLUME_MASK_SHIFT       (20)
 #define IS_MUTED_BIT            0x00010000
@@ -62,20 +62,30 @@ static void soundbox_loop_ping_tick()
     pcm5122_set_volume(60, 60);
 
     uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
-    uint16_t keycode = pioin & KEYCODE_MASK; // 0xMMSS (M=modifier, S=scancode)
+    uint16_t scancode = pioin & SCANCODE_MASK; // 0xMMSS (M=modifier, S=scancode)
     uint16_t volume = pioin >> VOLUME_MASK_SHIFT;
     uint8_t vol_l = (volume >> 6) & 0x3f; // 0(=0 db) to 43(=inf db), 0xfff=invalid(or not available)
     uint8_t vol_r = (volume) & 0x3f;
     uint8_t is_muted = (pioin & IS_MUTED_BIT) ? 1 : 0;
-    printf("latest keycode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", keycode, vol_l, vol_r, is_muted);
+    printf("latest scancode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", scancode, vol_l, vol_r, is_muted);
 
     // printf("timestamp = %ld, freq= %d, sizeof timestamp = %d\n", alt_timestamp(), alt_timestamp_freq(), sizeof(alt_timestamp_type));
 }
 
 static alt_timestamp_type latest_timestamp = 0;
+uint16_t latest_scancode = 0;
 
 void soundbox_loop_tick()
 {
+    uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
+
+    uint16_t scancode = pioin & SCANCODE_MASK; // NeXT key scancode
+    if (latest_scancode != scancode) {
+        latest_scancode = scancode;
+        printf("key scancode changed 0x%04x\n", scancode);
+    }
+
+    // invoke ping_tick() if necessary
     alt_timestamp_type current = alt_timestamp();
     if (current == 0) {
         alt_timestamp_start();

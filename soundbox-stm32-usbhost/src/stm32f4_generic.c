@@ -165,10 +165,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 
 }
 
+SPI_HandleTypeDef hspi1;
 
 void MX_SPI1_Init(void)
 {
-  static SPI_HandleTypeDef hspi1;
 
   /* SPI1 parameter configuration*/
   hspi1.Instance = SPI1;

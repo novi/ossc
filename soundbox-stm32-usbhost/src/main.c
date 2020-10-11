@@ -6,6 +6,7 @@
 #include "usbh_hid.h"
 #include "usbh_hub.h"
 
+#include "keyboard.h"
 #include "log.h"
 
 
@@ -164,6 +165,8 @@ int main(void)
 	LOG("APP RUNNING...");
 	LOG("MCU-ID %08X", DBGMCU->IDCODE);
 
+	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
+
 	memset(&hUSBHost[0], 0, sizeof(USBH_HandleTypeDef));
 
 	hUSBHost[0].valid   = 1;
@@ -175,12 +178,10 @@ int main(void)
 	USBH_RegisterClass(&hUSBHost[0], USBH_HUB_CLASS);
 
 	USBH_Start(&hUSBHost[0]);
-	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 
-	LOG("start");
+	LOG("start main");
 
 	int j = 0;
-	//uint8_t i2c_buf;
 	while(1)
 	{
 		uint8_t old_ossc_power_state = latest_ossc_power_state;
@@ -243,9 +244,8 @@ void hub_process()
 			_phost = &hUSBHost[current_loop];
 			USBH_LL_SetupEP0(_phost);
 
-			if(_phost->valid == 3)
-			{
-LOG("PROCESSING ATTACH %d", _phost->address);
+			if(_phost->valid == 3) {
+				LOG("PROCESSING ATTACH %d", _phost->address);
 				_phost->valid = 1;
 				_phost->busy  = 1;
 			}
@@ -254,21 +254,16 @@ LOG("PROCESSING ATTACH %d", _phost->address);
 		}
 	}
 
-	if(_phost != NULL && _phost->valid)
-	{
-		HID_MOUSE_Info_TypeDef *minfo;
-		minfo = USBH_HID_GetMouseInfo(_phost);
-		if(minfo != NULL)
-		{
+	if(_phost != NULL && _phost->valid) {
+		HID_MOUSE_Info_TypeDef *minfo = USBH_HID_GetMouseInfo(_phost);
+		if(minfo != NULL) {
 			LOG("BUTTON (%d, %d), %d, %d", minfo->x, minfo->y, minfo->buttons[0], minfo->buttons[1]);
-		}
-		else
-		{
-			HID_KEYBD_Info_TypeDef *kinfo;
-			kinfo = USBH_HID_GetKeybdInfo(_phost);
-			if(kinfo != NULL)
-			{
-				LOG("KEYB %d, Modifier lgui=%d", kinfo->keys[0], kinfo->lgui);
+			KeyboardHandleMouseInfo(minfo);
+		} else {
+			HID_KEYBD_Info_TypeDef *kinfo = USBH_HID_GetKeybdInfo(_phost);
+			if(kinfo != NULL) {
+				LOG("KEYB %d %d %d, Modifier lgui=%d..., status=0x%02x", kinfo->keys[0], kinfo->keys[1], kinfo->keys[2], kinfo->lgui, kinfo->state);
+				KeyboardHandleKeyboardInfo(kinfo);
 			}
 		}
 	}
@@ -281,32 +276,25 @@ void USBH_UserProcess (USBH_HandleTypeDef *pHost, uint8_t vId)
 	{
 		case HOST_USER_SELECT_CONFIGURATION:
 			break;
-
 		case HOST_USER_CLASS_SELECTED:
 			break;
-
 		case HOST_USER_CLASS_ACTIVE:
 			break;
-
 		case HOST_USER_CONNECTION:
 			break;
-
 		case HOST_USER_DISCONNECTION:
 			break;
-
 		case HOST_USER_UNRECOVERED_ERROR:
 			USBH_ErrLog("HOST_USER_UNRECOVERED_ERROR %d", hUSBHost[0].RequestState);
 			NVIC_SystemReset();
 			break;
-
 		default:
 			break;
 	}
 }
 
 void Error_Handler(void)
-{
-	
+{	
 }
 
 void SystemClock_Config(void)
