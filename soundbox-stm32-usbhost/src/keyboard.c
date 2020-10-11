@@ -8,20 +8,79 @@ typedef enum {
     SPIHeader_Mic = 3
 } SPIHeader;
 
-void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
-{
-
-}
-
 HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 {
     LOG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
-    return HAL_OK;
+    // return HAL_OK;
 
     WriteGPIO(PIN_OUT_SPI_SS, 1); // enable, low active
     HAL_StatusTypeDef result = HAL_SPI_Transmit(&hspi1, buf, size, 100);
     WriteGPIO(PIN_OUT_SPI_SS, 0);
     return result;
+}
+
+static uint8_t mouse_left_up = 1;
+static uint8_t mouse_right_up = 1;
+
+#define MOUSE_MOVE_SCALE_FACTOR 2
+
+static int8_t mouseAccTable[] = {
+    0, // 0
+    1, // 1
+    1, // 2
+    2, // 3
+    2, // 4
+    2, // 5
+};
+
+void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
+{
+    if (info->buttons[0] && mouse_left_up) {
+        mouse_left_up = 0; // mouse down
+    } else if (!info->buttons[0] && !mouse_left_up) {
+        mouse_left_up = 1; // mouse up
+    }
+    if (info->buttons[1] && mouse_right_up) {
+        mouse_right_up = 0; // mouse down
+    } else if (!info->buttons[1] && !mouse_right_up) {
+        mouse_right_up = 1; // mouse up
+    }
+
+    uint8_t d0 = mouse_left_up;
+    uint8_t d1 = mouse_right_up;
+
+    if (info->x || info->y) {
+        int8_t movX = info->x;
+        int8_t movY = info->y;
+
+        uint8_t absx = movX < 0 ? -movX : movX;
+        int8_t valx;
+        if (sizeof(mouseAccTable) > absx) {
+            valx = movX < 0 ? mouseAccTable[absx] : -mouseAccTable[absx]; // swap sign
+        } else {
+            valx = -(movX/MOUSE_MOVE_SCALE_FACTOR);
+        }
+        d0 |= (valx << 1 ) & 0xfe;
+
+
+        uint8_t absy = movY < 0 ? -movY : movY;
+        int8_t valy;
+        if (sizeof(mouseAccTable) > absy) {
+            valy = movY < 0 ? mouseAccTable[absy] : -mouseAccTable[absy]; // swap sign
+        } else {
+            valy = -(movY/MOUSE_MOVE_SCALE_FACTOR);
+        }
+        d1 |= (valy << 1 ) & 0xfe;
+        LOG("raw (%d, %d), mov (%d, %d)", info->x, info->y, movX, movY);
+    }
+
+    uint8_t data[3] = {SPIHeader_Mouse, 0, 0}; // Header
+    data[1] = d0;
+    data[2] = d1;
+    HAL_StatusTypeDef result = SendSPIData(data, 3);
+    if (result != HAL_OK) {
+        LOG("spi send error %d", result);
+    }
 }
 
 uint8_t hidkeycodeToNextscancode(uint8_t keycode)

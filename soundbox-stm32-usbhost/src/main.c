@@ -257,7 +257,7 @@ void hub_process()
 	if(_phost != NULL && _phost->valid) {
 		HID_MOUSE_Info_TypeDef *minfo = USBH_HID_GetMouseInfo(_phost);
 		if(minfo != NULL) {
-			LOG("BUTTON (%d, %d), %d, %d", minfo->x, minfo->y, minfo->buttons[0], minfo->buttons[1]);
+			// LOG("BUTTON (%d, %d), %d, %d", minfo->x, minfo->y, minfo->buttons[0], minfo->buttons[1]);
 			KeyboardHandleMouseInfo(minfo);
 		} else {
 			HID_KEYBD_Info_TypeDef *kinfo = USBH_HID_GetKeybdInfo(_phost);
