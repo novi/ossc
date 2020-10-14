@@ -98,7 +98,7 @@ module SPI_Slave
       end
       else if (r_RX_Bit_Count == 3'b010)
       begin
-        // r_RX_Done <= 1'b0;
+        r_RX_Done <= 1'b0;
       end
 
     end // else: !if(i_SPI_CS_n)
