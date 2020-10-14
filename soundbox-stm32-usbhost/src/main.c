@@ -212,7 +212,7 @@ int main(void)
 		else
 			WriteGPIO(PIN_OUT_STATUS_LED, 1);
 
-		// LOG("test\n");
+		// LOG("test");
 		hub_process();
 	}
 }

@@ -211,11 +211,11 @@ struct KeyState {
 
 #define KEY_ROLLOVER_COUNT (2) // NeXT keyboard is max 2 keys
 
-static struct KeyState keyState[KEY_ROLLOVER_COUNT] = {{0},{0}};
+static struct KeyState keyState[6] = {{0},{0},{0},{0},{0},{0}};
 
 void setKeyMake(uint8_t hidKeycode)
 {
-    for(uint8_t i = 0; i < KEY_ROLLOVER_COUNT; i++) {
+    for(uint8_t i = 0; i < 6; i++) {
         if (!keyState[i].isValid) {
             keyState[i].isValid = 1;
             keyState[i].hidKeycode = hidKeycode;
@@ -227,7 +227,7 @@ void setKeyMake(uint8_t hidKeycode)
 
 void setKeyBreak(uint8_t hidKeycode)
 {
-    for(uint8_t i = 0; i < KEY_ROLLOVER_COUNT; i++) {
+    for(uint8_t i = 0; i < 6; i++) {
         if (keyState[i].isValid && keyState[i].hidKeycode == hidKeycode) {
             keyState[i].isValid = 0;
         } 
@@ -236,7 +236,7 @@ void setKeyBreak(uint8_t hidKeycode)
 
 uint8_t isKeyMake(uint8_t hidKeycode)
 {
-    for(uint8_t i = 0; i < KEY_ROLLOVER_COUNT; i++) {
+    for(uint8_t i = 0; i < 6; i++) {
         if (keyState[i].isValid && keyState[i].hidKeycode == hidKeycode) {
             return 1;
         }
@@ -246,10 +246,12 @@ uint8_t isKeyMake(uint8_t hidKeycode)
 
 void setAllKeyBreak()
 {
-    for(uint8_t i = 0; i < KEY_ROLLOVER_COUNT; i++) {
+    for(uint8_t i = 0; i < 6; i++) {
         keyState[i].isValid = 0;
     }
 }
+
+static uint8_t latestModifier = 0;
 
 void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
 {
@@ -300,12 +302,13 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
     }
     
 
-    for(uint8_t i = 0; i < KEY_ROLLOVER_COUNT; i++) {
+    for(uint8_t i = 0; i < 6; i++) {
         if (keyState[i].isValid) {
             uint8_t isStoredKeyBreak = 1;
             for(uint8_t j = 0; j < KEY_ROLLOVER_COUNT; j++) {
                 if (keyState[i].hidKeycode == info->keys[j]) {
                     isStoredKeyBreak = 0;
+                    break;
                 }
             }
             if (isStoredKeyBreak) {
@@ -330,21 +333,28 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
         scanCodeForFirstKeyMake = hidkeycodeToNextscancode(info->keys[0]);
     }
 
-    if (!normalKeySent && nextModifierCode == 0) {
-        // modifier break
-        data[1] = 0x00;
-        data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
-        HAL_StatusTypeDef result = SendSPIData(data, 3);
-        if (result != HAL_OK) {
-            LOG("spi send error %d", result);
-        }
-    } else if (!normalKeySent && nextModifierCode) {
-        // only modifier make
-        data[1] = nextModifierCode;
-        data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
-        HAL_StatusTypeDef result = SendSPIData(data, 3);
-        if (result != HAL_OK) {
-            LOG("spi send error %d", result);
+    if (!normalKeySent && latestModifier != nextModifierCode) {
+        // modifier changed
+        if (nextModifierCode == 0) {
+            // modifier break
+            data[1] = 0x00;
+            data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
+            HAL_StatusTypeDef result = SendSPIData(data, 3);
+            if (result != HAL_OK) {
+                LOG("spi send error %d", result);
+            }
+        } else {
+            // only modifier make
+            data[1] = nextModifierCode;
+            data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
+            HAL_StatusTypeDef result = SendSPIData(data, 3);
+            if (result != HAL_OK) {
+                LOG("spi send error %d", result);
+            }
         }
     }
+
+    
+
+    latestModifier = nextModifierCode;
 }
