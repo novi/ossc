@@ -252,12 +252,18 @@ void setAllKeyBreak()
 
 static uint8_t latestModifier = 0;
 
+#define USE_RIGHT_CONTROL_AS_COMMAND 1
+
 void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
 {
     uint8_t data[3] = {SPIHeader_Keyboard, 0, 0}; // Header, Modifier, Scancode
 
     uint8_t nextModifierCode = 0;
+    #if USE_RIGHT_CONTROL_AS_COMMAND
+    if (info->lctrl) {
+    #else
     if (info->lctrl || info->rctrl) {
+    #endif
         nextModifierCode |= 1 << 0;
     }
     if (info->lshift) {
@@ -269,7 +275,11 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
     if (info->lgui) {
         nextModifierCode |= 1 << 3;
     }
+    #if USE_RIGHT_CONTROL_AS_COMMAND
+    if (info->rgui || info->rctrl) {
+    #else
     if (info->rgui) {
+    #endif
         nextModifierCode |= 1 << 4;
     }
     if (info->lalt) {
@@ -294,8 +304,9 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
                 if (result != HAL_OK) {
                     LOG("spi send error %d", result);
                 }
-            } else if (hidkeycode == 0x49) { // insert key
-                LOG("TODO: handle insert key for power button.");
+            } else if (hidkeycode == 0x49 || // insert key
+                        hidkeycode == 0x3d) { // F4 key
+                HandlePowerButton();
             } 
         }
     }

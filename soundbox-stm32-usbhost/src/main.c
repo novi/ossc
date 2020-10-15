@@ -38,6 +38,13 @@ static void update_usb_host_power()
 	WriteGPIO(PIN_OUT_USB_ENABLE, 1);
 }
 
+void HandlePowerButton()
+{
+	WriteGPIO(PIN_OUT_NEXT_POWERSW, 1);
+	HAL_Delay(100);
+	WriteGPIO(PIN_OUT_NEXT_POWERSW, 0);
+}
+
 static void init_gpio_value()
 {
 	WriteGPIO(PIN_OUT_NEXT_POWERSW, 0);
