@@ -35,7 +35,6 @@ module NextSoundBox (
 
     // dummy
     assign spdif_led0 = from_mon;
-    assign mc_miso = mc_sck | mc_mosi | mc_ss;
     
     wire [39:0] in_data;
     wire data_recv;
@@ -83,29 +82,84 @@ module NextSoundBox (
         audio_data
     );
     
-    wire [16:0] keyboard_data_s; // FPGA(system) clock side
-    wire [16:0] keyboard_data_n; // next hardware (mon_clk) side
+    // ----- SPI slave
+    wire [7:0] spi_data;
+    wire spi_data_valid;
+    
+    wire [23:0] spi_buf;
+    wire spi_buf_valid;
+    
+    SPI_Slave #(.SPI_MODE(1)) spi_slave(
+        hw_reset_n,
+        clk27,
+        spi_data_valid,
+        spi_data,
+        1'b1,
+        8'h00,
+        mc_sck,
+        mc_miso,
+        mc_mosi,
+        mc_ss
+    );
+    
+    SPIReceiver spi_recv(
+        clk27,
+        spi_data,
+        spi_data_valid,
+        mc_ss,
+        spi_buf,
+        spi_buf_valid
+    );
+    
+    wire spi_is_keyboard_data, spi_is_mouse_data, spi_is_mic_data;
+    wire [16:0] spi_keyboard_data;
+    assign spi_keyboard_data = {spi_is_mouse_data, spi_buf[15:0]};
+    SPIOpDecoder spi_opdec(
+        spi_buf[23:16],
+        spi_buf_valid,
+        spi_is_keyboard_data,
+        spi_is_mouse_data,
+        spi_is_mic_data
+    );
+    
+    
+    // ----- keyboard
+    
+    
+    wire [16:0] keyboard_data_nonadb; 
     wire keyboard_data_ready, is_mouse_data;
-    assign keyboard_data_s[16] = is_mouse_data;
+    assign keyboard_data_nonadb[16] = is_mouse_data;
     Keyboard keyboard(
         clk27, // driven by FPGA clock
         keyboard_led_update_s,
         keyboard_led_data_s,
         keyboard_data_ready,
         is_mouse_data,
-        keyboard_data_s[15:0], // keyboard_data
+        keyboard_data_nonadb[15:0], // keyboard_data
         from_kb,
         to_kb
         //debug_test_pins[4:0]
     );
-    assign latest_keycode = keyboard_data_s[15:0];
-    assign latest_keycode_valid = keyboard_data_ready & (~is_mouse_data);
     
+    wire [16:0] keyboard_data_s; // FPGA(system) clock side
+    wire keyboard_data_valid_s;
+    SPIKeyboardMux keyboard_mux(
+        spi_keyboard_data,
+        spi_is_keyboard_data | spi_is_mouse_data,
+        keyboard_data_nonadb,
+        keyboard_data_ready,
+        keyboard_data_s,
+        keyboard_data_valid_s
+    );
+    assign latest_keycode = keyboard_data_s[15:0];
+    assign latest_keycode_valid = keyboard_data_valid_s & (~keyboard_data_s[16]);
+    
+    wire [16:0] keyboard_data_n; // next hardware (mon_clk) side
     wire keyboard_data_ready_n;
     DataSync #(.W(17)) keyboard_data_sync ( // mon_clk domain to FPGA clock domain
         clk27,
         keyboard_data_s,
-        keyboard_data_ready,
+        keyboard_data_valid_s,
         mon_clk,
         keyboard_data_n,
         keyboard_data_ready_n

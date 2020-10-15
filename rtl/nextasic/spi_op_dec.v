@@ -5,7 +5,7 @@ module SPIOpDecoder(
 	input wire op_valid,
 	output reg is_keyboard_data,
 	output reg is_mouse_data,
-	output reg is_mic_data,
+	output reg is_mic_data
 );
 
 	always@ (*) begin
@@ -27,5 +27,28 @@ module SPIOpDecoder(
 				end
 			endcase
 	end
+
+endmodule
+
+
+module SPIKeyboardMux(
+	input wire [16:0] spi_keyboard_data,
+	input wire spi_keyboard_data_valid,
+	input wire [16:0] nonadb_keyboard_data,
+	input wire nonadb_keyboard_data_valid,
+	
+	output reg [16:0] keyboard_data,
+	output wire keyboard_data_valid
+);
+
+	assign keyboard_data_valid = spi_keyboard_data_valid | nonadb_keyboard_data_valid;
+	
+	always@ (*) begin
+		if (spi_keyboard_data_valid)
+			keyboard_data = spi_keyboard_data;
+		else
+			keyboard_data = nonadb_keyboard_data;
+	end
+	
 
 endmodule

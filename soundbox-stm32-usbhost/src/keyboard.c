@@ -11,7 +11,6 @@ typedef enum {
 HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 {
     LOG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
-    // return HAL_OK;
 
     WriteGPIO(PIN_OUT_SPI_SS, 1); // enable, low active
     HAL_StatusTypeDef result = HAL_SPI_Transmit(&hspi1, buf, size, 100);

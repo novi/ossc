@@ -21,7 +21,6 @@ module SPIReceiver(
         end else if (spi_data_valid_in && counter == 2'd2) begin
             // done, spi buffer is 3 bytes
             spi_buf_valid <= 1;
-            counter <= 0;
         end
     end
 
@@ -36,7 +35,8 @@ module SPIReceiver(
         end else if (spi_data_valid && !spi_buf_valid) begin
             spi_buf[counter] = spi_data;
             counter = counter + 1'b1;
-        end
+        end else if (spi_buf_valid)
+            counter <= 0;
     end
 
 endmodule
