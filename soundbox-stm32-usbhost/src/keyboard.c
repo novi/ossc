@@ -10,6 +10,8 @@ typedef enum {
 
 HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 {
+    // SPI to FPGA
+    // command, data[0], data[1]...
     LOG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
 
     WriteGPIO(PIN_OUT_SPI_SS, 1); // enable, low active
@@ -295,11 +297,11 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
         uint8_t hidkeycode = info->keys[i];
         if (hidkeycode && !isKeyMake(hidkeycode)) {
             // normal key make
-            data[1] = nextModifierCode | 0x80;
-            data[2] = hidkeycodeToNextscancode(hidkeycode);
+            data[2] = nextModifierCode | 0x80;
+            data[1] = hidkeycodeToNextscancode(hidkeycode);
             setKeyMake(hidkeycode);
             normalKeySent = 1;
-            if (data[2]) { // not send unknown keycode
+            if (data[1]) { // not send unknown keycode
                 HAL_StatusTypeDef result = SendSPIData(data, 3);
                 if (result != HAL_OK) {
                     LOG("spi send error %d", result);
@@ -323,9 +325,9 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
             }
             if (isStoredKeyBreak) {
                 // normal key break
-                data[1] = nextModifierCode | 0x80;
+                data[2] = nextModifierCode | 0x80;
                 uint8_t nextscancode = hidkeycodeToNextscancode(keyState[i].hidKeycode);
-                data[2] = nextscancode | 0x80; // break code
+                data[1] = nextscancode | 0x80; // break code
                 setKeyBreak(keyState[i].hidKeycode);
                 normalKeySent = 1;
                 if (nextscancode) {
@@ -347,16 +349,16 @@ void KeyboardHandleKeyboardInfo(HID_KEYBD_Info_TypeDef* info)
         // modifier changed
         if (nextModifierCode == 0) {
             // modifier break
-            data[1] = 0x00;
-            data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
+            data[2] = 0x00;
+            data[1] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
             HAL_StatusTypeDef result = SendSPIData(data, 3);
             if (result != HAL_OK) {
                 LOG("spi send error %d", result);
             }
         } else {
             // only modifier make
-            data[1] = nextModifierCode;
-            data[2] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
+            data[2] = nextModifierCode;
+            data[1] = scanCodeForFirstKeyMake ? scanCodeForFirstKeyMake : 0x80;
             HAL_StatusTypeDef result = SendSPIData(data, 3);
             if (result != HAL_OK) {
                 LOG("spi send error %d", result);

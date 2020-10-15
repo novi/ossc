@@ -113,7 +113,7 @@ module NextSoundBox (
     
     wire spi_is_keyboard_data, spi_is_mouse_data, spi_is_mic_data;
     wire [16:0] spi_keyboard_data;
-    assign spi_keyboard_data = {spi_is_mouse_data, spi_buf[15:0]};
+    assign spi_keyboard_data = {spi_is_mouse_data, spi_buf[7:0], spi_buf[15:8]};
     SPIOpDecoder spi_opdec(
         spi_buf[23:16],
         spi_buf_valid,
