@@ -4,7 +4,7 @@
 #include "system.h"
 #include "i2c_opencores.h"
 
-#define MCU_I2C_ADDR (0x98>>1)
+#define MCU_I2C_ADDR (0xc8>>1)
 
 uint8_t mcu_init()
 {
