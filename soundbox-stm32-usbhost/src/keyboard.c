@@ -12,7 +12,7 @@ HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 {
     // SPI to FPGA
     // command, data[0], data[1]...
-    LOG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
+    LOG_DEBUG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
 
     WriteGPIO(PIN_OUT_SPI_SS, 1); // enable, low active
     HAL_StatusTypeDef result = HAL_SPI_Transmit(&hspi1, buf, size, 100);
@@ -72,7 +72,7 @@ void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
             valy = -(movY/MOUSE_MOVE_SCALE_FACTOR);
         }
         d1 |= (valy << 1 ) & 0xfe;
-        LOG("raw (%d, %d), mov (%d, %d)", info->x, info->y, movX, movY);
+        LOG_DEBUG("raw (%d, %d), mov (%d, %d)", info->x, info->y, movX, movY);
     }
 
     uint8_t data[3] = {SPIHeader_Mouse, 0, 0}; // Header

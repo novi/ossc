@@ -269,7 +269,7 @@ void hub_process()
 		} else {
 			HID_KEYBD_Info_TypeDef *kinfo = USBH_HID_GetKeybdInfo(_phost);
 			if(kinfo != NULL) {
-				LOG("KEYB %d %d %d, Modifier lgui=%d..., status=0x%02x", kinfo->keys[0], kinfo->keys[1], kinfo->keys[2], kinfo->lgui, kinfo->state);
+				LOG_DEBUG("KEYB %d %d %d, Modifier lgui=%d..., status=0x%02x", kinfo->keys[0], kinfo->keys[1], kinfo->keys[2], kinfo->lgui, kinfo->state);
 				KeyboardHandleKeyboardInfo(kinfo);
 			}
 		}

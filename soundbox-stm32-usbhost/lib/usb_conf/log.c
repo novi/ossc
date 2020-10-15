@@ -72,3 +72,8 @@ void LOG_ARRAY(const uint8_t *data, int size)
 	LOG_ARRAY1(data, size);
     write_string("\r\n");
 }
+
+void LOG_DUMMY(const char *__msg, ...)
+{
+    
+}
