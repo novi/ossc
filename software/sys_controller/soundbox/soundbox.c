@@ -7,6 +7,7 @@
 #include "mcu.h"
 #include <unistd.h>
 #include "sys/alt_timestamp.h"
+#include "control_sb.h"
 
 // sys_ctrl bits for SoundBox
 #define CONTROL_LED_FROM_SOFTWARE   (1<<4)
@@ -83,6 +84,7 @@ void soundbox_loop_tick()
     if (latest_scancode != scancode) {
         latest_scancode = scancode;
         printf("key scancode changed 0x%04x\n", scancode);
+        sb_keyboard_changed(scancode);
     }
 
     // invoke ping_tick() if necessary

@@ -157,7 +157,7 @@ C_SRCS += memory/flash.c
 #C_SRCS += memory/sdcard.c
 C_SRCS += ossc/av_controller.c
 C_SRCS += ossc/avconfig.c
-C_SRCS += ossc/controls.c
+#C_SRCS += ossc/controls.c
 #C_SRCS += ossc/firmware.c
 ifeq ($(OSDLANG),JP)
 C_SRCS += ossc/menu_sjis.c
@@ -170,6 +170,7 @@ C_SRCS += ossc/utils.c
 #C_SRCS += ulibSD/spi_io.c
 C_SRCS += soundbox/soundbox.c
 C_SRCS += soundbox/mcu.c
+C_SRCS += soundbox/control_sb.c
 C_SRCS += tlv320/tlv320adc3100.c
 CXX_SRCS :=
 CXX_SRCS += pcm5122/pcm5122.cpp

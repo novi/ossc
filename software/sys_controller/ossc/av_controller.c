@@ -114,7 +114,7 @@ inline void lcd_write_menu()
     // lcd_write((char*)&menu_row1, (char*)&menu_row2);
     menu_row1[LCD_ROW_LEN] = '\0';
     menu_row2[LCD_ROW_LEN] = '\0';
-    printf("LCD: %s\n%s\n", menu_row1, menu_row2);
+    printf("LCD: %s\n     %s\n", menu_row1, menu_row2);
 }
 
 inline void lcd_write_status() {
@@ -124,7 +124,7 @@ inline void lcd_write_status() {
     // lcd_write((char*)&row1, (char*)&row2);
     row1[LCD_ROW_LEN] = '\0';
     row2[LCD_ROW_LEN] = '\0';
-    printf("LCD: %s\n%s\n", row1, row2);
+    printf("LCD: %s\n     %s\n", row1, row2);
 }
 
 #ifdef ENABLE_AUDIO
@@ -820,22 +820,28 @@ int init_hw()
     }
     */
 
+tvp_init_begin:
+
     /* check if TVP is found */
     chiprev = tvp_readreg(TVP_CHIPREV);
     //printf("chiprev %d\n", chiprev);
 
     if (chiprev == 0xff) {
         printf("Error: could not read from TVP7002\n");
-        return -3;
+        usleep(1000*10);
+        goto tvp_init_begin;
     }
 
     tvp_init();
 
-    chiprev = HDMITX_ReadI2C_Byte(IT_DEVICEID);
+it_init_begin:
 
+    chiprev = HDMITX_ReadI2C_Byte(IT_DEVICEID);
+    
     if (chiprev != 0x13) {
         printf("Error: could not read from IT6613\n");
-        return -4;
+        usleep(1000*10);
+        goto it_init_begin;
     }
 
     InitIT6613();
@@ -859,7 +865,8 @@ int init_hw()
     // Set defaults
     set_default_avconfig();
     memcpy(&cm.cc, &tc_default, sizeof(avconfig_t));
-    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
+    // memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap)); // Disable for Sound Box
+    memset(rc_keymap, 0xffff, sizeof(rc_keymap));
 
     // Load initconfig and profile
     read_userdata(INIT_CONFIG_SLOT, 0);
