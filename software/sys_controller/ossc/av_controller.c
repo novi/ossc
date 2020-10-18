@@ -987,6 +987,8 @@ int main()
 
     int init_stat, man_input_change;
 
+init_stat_begin:
+
     init_stat = init_hw();
 
     if (init_stat >= 0) {
@@ -1005,13 +1007,14 @@ int main()
         strncpy(row2, "", LCD_ROW_LEN+1);
         osd->osd_config.status_refresh = 1;
         lcd_write_status();
-        while (1) {}
+        usleep(500000);
+        goto init_stat_begin;
     }
 
     // start timer for auto input
     alt_timestamp_start();
 
-    target_input = AV3_RGBHV; // default input
+    // target_input = AV3_RGBHV; // default input
 
     // Mainloop
     while(1) {
@@ -1084,6 +1087,9 @@ int main()
 
         if (menu_active)
             display_menu(0);
+
+        // for Sound Box, target input is always initial input
+        target_input = def_input;
 
         // Only auto load profile when input is manually changed or when sync is active after automatic switch.
         if ((target_input != cm.avinput && man_input_change) || (auto_input_changed && cm.sync_active))  {
