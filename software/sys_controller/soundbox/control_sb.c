@@ -51,7 +51,16 @@ extern volatile sc_regs *sc;
 #define KEYSCAN_KEY_O 0x07
 #define KEYSCAN_KEY_L 0x2d
 
+#define KEYSCAN_KEY_BACKSPACE 0x1b
+#define KEYSCAN_KEY_ENTER 0x2a
+#define KEYSCAN_KEY_LEFT 0x09
+#define KEYSCAN_KEY_RIGHT 0x10
+#define KEYSCAN_KEY_UP 0x16
+#define KEYSCAN_KEY_DOWN 0x0f
+
 static uint8_t lm_mode_menu_active = 0;
+
+menucode_id menu_code = NO_ACTION;
 
 void sb_keyboard_changed(uint16_t scancode)
 {
@@ -141,19 +150,26 @@ void sb_keyboard_changed(uint16_t scancode)
                 // lcd_write_status();
                 // menu_active = 0;
                 break;
+            case KEYSCAN_KEY_BACKSPACE: menu_code = PREV_MENU; break;
+            case KEYSCAN_KEY_ENTER: menu_code = OPT_SELECT; break;
+            case KEYSCAN_KEY_LEFT: menu_code = VAL_MINUS; break;
+            case KEYSCAN_KEY_RIGHT: menu_code = VAL_PLUS; break;
+            case KEYSCAN_KEY_UP: menu_code = PREV_PAGE; break;
+            case KEYSCAN_KEY_DOWN: menu_code = NEXT_PAGE; break;
             }
         }
 
     } else if ( (scancode & KEYSCAN_ONLY_MODIFIER) && 
         (scancode & KEYSCAN_MODIFIER_ALT_LEFT) &&
         (scancode & KEYSCAN_MODIFIER_ALT_RIGHT) ) {
-        printf("only modifier, left and right alt\n");
         
         menu_active = !menu_active;
         osd->osd_config.menu_active = menu_active;
         profile_sel_menu = profile_sel;
 
         lm_mode_menu_active = 0;
+
+        printf("only modifier, left and right alt, menu active = %d\n", menu_active);
 
         if (menu_active)
             display_menu(1);
