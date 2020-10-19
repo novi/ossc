@@ -29,12 +29,12 @@ static int8_t mouseAccTable[] = {
     0, // 0
     1, // 1
     1, // 2
-    1, // 3
-    1, // 4
-    2, // 5
-    2, // 6
-    2, // 7
-    3, // 8
+    2, // 3
+    2, // 4
+    3, // 5
+    3, // 6
+    4, // 7
+    4, // 8
 };
 
 void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
@@ -62,7 +62,8 @@ void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
         if (sizeof(mouseAccTable) > absx) {
             valx = movX < 0 ? mouseAccTable[absx] : -mouseAccTable[absx]; // swap sign
         } else {
-            valx = -(movX/MOUSE_MOVE_SCALE_FACTOR);
+            // valx = -(movX/MOUSE_MOVE_SCALE_FACTOR);
+            valx = movX < 0 ? mouseAccTable[sizeof(mouseAccTable)-1] : -mouseAccTable[sizeof(mouseAccTable)-1];
         }
         d0 |= (valx << 1 ) & 0xfe;
 
@@ -72,7 +73,8 @@ void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
         if (sizeof(mouseAccTable) > absy) {
             valy = movY < 0 ? mouseAccTable[absy] : -mouseAccTable[absy]; // swap sign
         } else {
-            valy = -(movY/MOUSE_MOVE_SCALE_FACTOR);
+            //valy = -(movY/MOUSE_MOVE_SCALE_FACTOR);
+            valy = movY < 0 ? mouseAccTable[sizeof(mouseAccTable)-1] : -mouseAccTable[sizeof(mouseAccTable)-1];
         }
         d1 |= (valy << 1 ) & 0xfe;
         LOG_DEBUG("raw (%d, %d), mov (%d, %d)", info->x, info->y, movX, movY);
