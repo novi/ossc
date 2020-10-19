@@ -29,7 +29,9 @@ module NextSoundBox (
     output latest_keycode_valid,
     output is_muted,
     output [11:0] volume_db, // Lch, Rch
-    output volume_db_valid
+    output volume_db_valid,
+
+    input enable_next_keyboard
 );
 
 
@@ -143,6 +145,8 @@ module NextSoundBox (
     
     wire [16:0] keyboard_data_s; // FPGA(system) clock side
     wire keyboard_data_valid_s;
+    wire is_mouse_s;
+    assign is_mouse_s = keyboard_data_s[16];
     SPIKeyboardMux keyboard_mux(
         spi_keyboard_data,
         spi_is_keyboard_data | spi_is_mouse_data,
@@ -152,14 +156,14 @@ module NextSoundBox (
         keyboard_data_valid_s
     );
     assign latest_keycode = keyboard_data_s[15:0];
-    assign latest_keycode_valid = keyboard_data_valid_s & (~keyboard_data_s[16]);
+    assign latest_keycode_valid = keyboard_data_valid_s & (~is_mouse_s);
     
     wire [16:0] keyboard_data_n; // next hardware (mon_clk) side
     wire keyboard_data_ready_n;
     DataSync #(.W(17)) keyboard_data_sync ( // mon_clk domain to FPGA clock domain
         clk27,
         keyboard_data_s,
-        keyboard_data_valid_s,
+        keyboard_data_valid_s & (is_mouse_s | enable_next_keyboard | (!keyboard_data_s[15]) ), // non normal key always enabled, mouse always enabled
         mon_clk,
         keyboard_data_n,
         keyboard_data_ready_n

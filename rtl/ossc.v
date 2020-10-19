@@ -74,7 +74,7 @@ module ossc (
 
 // NeXT Sound Box additional start
 // disable unused funcions
-wire LED_G, LED_R, LCD_RS, LCD_CS_N, LCD_BL, SD_CLK;
+wire LED_G, LED_R, LCD_BL, SD_CLK;
 wire HDMI_TX_MODE;
 assign HDMI_TX_MODE = 0;
 wire SD_CMD;
@@ -89,7 +89,6 @@ reg is_mono = 1;
 
 wire lcd_bl_on, spdif_led0;
 assign lcd_bl_on = 0;
-assign LCD_RS = 0;
 
 always@ (*) begin
     if (sys_ctrl[4]) // use led from software
@@ -159,7 +158,8 @@ NextSoundBox nextsb(
     latest_keycode_valid,
     is_muted,
     volume_db, 
-    volume_db_valid
+    volume_db_valid,
+    sys_ctrl[6] // enable_next_keyboard
 );
 
 // NeXT Sound Box end
@@ -295,7 +295,7 @@ assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0);
 `endif
 
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
-assign LCD_CS_N = sys_ctrl[6];
+// assign LCD_CS_N = sys_ctrl[6];
 // assign LCD_RS = sys_ctrl[5];
 // wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
 wire [1:0] lcd_bl_time = sys_ctrl[3:2];

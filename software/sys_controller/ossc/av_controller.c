@@ -791,7 +791,7 @@ int init_hw()
 
     // unreset hw
     // sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT;
-    sys_ctrl = AV_RESET_N|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT; // for Sound Box
+    sys_ctrl = AV_RESET_N|SD_SPI_SS_N|REMOTE_EVENT; // for Sound Box
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     // Reload initial PLL config (needed after jtagm_reset_req if config has changed).
@@ -1088,6 +1088,8 @@ init_stat_begin:
         if (menu_active)
             display_menu(0);
 
+        update_enable_next_keyboard(!menu_active);
+        
         // for Sound Box, target input is always initial input
         target_input = def_input;
 

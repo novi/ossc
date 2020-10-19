@@ -52,6 +52,7 @@ extern volatile sc_regs *sc;
 #define KEYSCAN_KEY_L 0x2d
 
 #define KEYSCAN_KEY_BACKSPACE 0x1b
+#define KEYSCAN_KEY_ESC 0x49
 #define KEYSCAN_KEY_ENTER 0x2a
 #define KEYSCAN_KEY_LEFT 0x09
 #define KEYSCAN_KEY_RIGHT 0x10
@@ -151,6 +152,7 @@ void sb_keyboard_changed(uint16_t scancode)
                 // menu_active = 0;
                 break;
             case KEYSCAN_KEY_BACKSPACE: menu_code = PREV_MENU; break;
+            case KEYSCAN_KEY_ESC: menu_code = PREV_MENU; break;
             case KEYSCAN_KEY_ENTER: menu_code = OPT_SELECT; break;
             case KEYSCAN_KEY_LEFT: menu_code = VAL_MINUS; break;
             case KEYSCAN_KEY_RIGHT: menu_code = VAL_PLUS; break;

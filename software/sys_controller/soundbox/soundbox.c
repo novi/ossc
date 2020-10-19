@@ -9,9 +9,13 @@
 #include "sys/alt_timestamp.h"
 #include "control_sb.h"
 
+extern alt_u16 sys_ctrl;
+
 // sys_ctrl bits for SoundBox
-#define CONTROL_LED_FROM_SOFTWARE   (1<<4)
-#define LED_ON                      (1<<5)
+#define CONTROL_LED_FROM_SOFTWARE_BIT   (1<<4)
+#define LED_ON_BIT                      (1<<5)
+#define ENABLE_NEXT_KEYBOARD_BIT        (1<<6)
+
 
 // pio input bits
 #define SCANCODE_MASK            0x0000ffff
@@ -104,4 +108,14 @@ void soundbox_loop_tick()
             }
         }
     }    
+}
+
+void update_enable_next_keyboard(uint8_t enabled)
+{
+    if (enabled) {
+        sys_ctrl |= ENABLE_NEXT_KEYBOARD_BIT; // bit set
+    } else {
+        sys_ctrl &= ~(ENABLE_NEXT_KEYBOARD_BIT); // bit clear
+    }
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }
