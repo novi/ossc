@@ -23,15 +23,18 @@ HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 static uint8_t mouse_left_up = 1;
 static uint8_t mouse_right_up = 1;
 
-#define MOUSE_MOVE_SCALE_FACTOR 2
+#define MOUSE_MOVE_SCALE_FACTOR 8
 
 static int8_t mouseAccTable[] = {
     0, // 0
     1, // 1
     1, // 2
-    2, // 3
-    2, // 4
+    1, // 3
+    1, // 4
     2, // 5
+    2, // 6
+    2, // 7
+    3, // 8
 };
 
 void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)
