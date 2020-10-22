@@ -16,7 +16,7 @@
 #include "log.h"
 
 #define USBH_MAX_NUM_ENDPOINTS                3
-#define USBH_MAX_NUM_INTERFACES               3
+#define USBH_MAX_NUM_INTERFACES               4
 #define USBH_MAX_NUM_CONFIGURATION            1
 #define USBH_MAX_NUM_SUPPORTED_CLASS          4
 #define USBH_KEEP_CFG_DESCRIPTOR              0

@@ -169,7 +169,7 @@ static USBH_StatusTypeDef USBH_HID_InterfaceInit (USBH_HandleTypeDef *phost)
 			if_ix = 0;
 			pif = (USBH_InterfaceDescTypeDef *)0;
 
-USBH_UsrLog("INTERFACES: %d",phost->device.CfgDesc.bNumInterfaces);
+USBH_UsrLog("num INTERFACES: %d",phost->device.CfgDesc.bNumInterfaces);
 
 			num_itf = phost->device.CfgDesc.bNumInterfaces;
 			if(phost->device.CfgDesc.bNumInterfaces > USBH_MAX_NUM_INTERFACES)
@@ -184,7 +184,13 @@ USBH_UsrLog("INTERFACES: %d",phost->device.CfgDesc.bNumInterfaces);
 			HID_Handle = NULL;
 			itfnum = phost->device.CfgDesc.Itf_Desc[if_ix].bInterfaceNumber;
 
-			USBH_SelectInterface(phost, itfnum);
+			status = USBH_SelectInterface(phost, itfnum);
+			if (status == USBH_OK) {
+				status = USBH_BUSY;
+			} else {
+				USBH_ErrLog("USBH_SelectInterface failure. %d", status);
+				status = USBH_FAIL;
+			}
 			state = 2;
 
 USBH_UsrLog ("Class    : %xh", phost->device.CfgDesc.Itf_Desc[if_ix].bInterfaceClass );
@@ -195,11 +201,20 @@ USBH_UsrLog ("Protocol : %xh", phost->device.CfgDesc.Itf_Desc[if_ix].bInterfaceP
 
 		case 2:
 			/* Get HID Desc */
-			if (USBH_HID_GetHIDDescriptor (phost, itfnum, USB_HID_DESC_SIZE)== USBH_OK)
-			{
+			status = USBH_HID_GetHIDDescriptor (phost, itfnum, USB_HID_DESC_SIZE);
+			if (status == USBH_OK) {
+				status = USBH_BUSY;
 				USBH_HID_ParseHIDDesc(&hid_desc, phost->device.Data);
 USBH_UsrLog("HID LEN %d - %d",hid_desc.wItemLength, phost->device.current_interface);
 				state = 3;
+			} else {
+				if (status == USBH_BUSY) {
+					USBH_UsrLog("USBH_HID_GetHIDDescriptor BUSY. retrying...");
+				} else {
+					USBH_ErrLog("USBH_HID_GetHIDDescriptor failure. %d", status);
+					status = USBH_FAIL;
+				}
+				HAL_Delay(20);
 			}
 			break;
 
@@ -338,6 +353,8 @@ static USBH_StatusTypeDef USBH_HID_ClassRequest(USBH_HandleTypeDef *phost)
 	USBH_StatusTypeDef classReqStatus = USBH_BUSY;
 
 	HID_HandleTypeDef *HID_Handle = phost->USBH_ClassTypeDef_pData[0];
+
+	USBH_DbgLog("USBH_HID_ClassRequest ctl_state %d", HID_Handle->ctl_state);
 
 	/* Switch HID state machine */
 	switch (HID_Handle->ctl_state)
