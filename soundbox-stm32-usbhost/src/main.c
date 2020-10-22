@@ -59,7 +59,7 @@ static uint8_t i2c_buf;
 
 static void recv_i2c_slave()
 {
-	HAL_I2C_Slave_Receive_IT(&hi2c2, i2c_recv_buf, 3);
+	HAL_I2C_Slave_Receive_IT(&hi2c2, i2c_recv_buf, 1);
 }
 
 static void send_i2c_slave()
@@ -72,9 +72,10 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	if (hi2c->Instance == hi2c2.Instance) {
 		clear_i2c_intr_counter();
 		i2c_latest_active_tick = HAL_GetTick();
-		LOG("i2c recv done. data0 = %d, data1 = %d, data2 = %d, tick = %d", i2c_recv_buf[0],
-		i2c_recv_buf[1], i2c_recv_buf[2],
-		HAL_GetTick());
+		// LOG("i2c recv done. data0 = %d, data1 = %d, data2 = %d, tick = %d", i2c_recv_buf[0],
+		// i2c_recv_buf[1], i2c_recv_buf[2],
+		// HAL_GetTick());
+
 		// send_i2c_slave();
 		recv_i2c_slave();
 	}
@@ -106,9 +107,15 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 	}
 }
 
+#define I2C_DISABLED 0
+
 static uint8_t i2c_started = 0;
 static void start_i2c()
 {
+#if I2C_DISABLED
+	return;
+#endif
+
 	if (i2c_started) return;
 	i2c_started = 1;
 	MX_I2C2_Init();
@@ -126,6 +133,10 @@ static void stop_i2c()
 
 static void check_i2c_activity()
 {
+#if I2C_DISABLED
+	return;
+#endif
+
 	uint32_t current = HAL_GetTick();
 	if (!latest_ossc_power_state) {
 		// LOG("ossc is turn off. skip i2c activity checking.");
@@ -213,6 +224,10 @@ int main(void)
 				latest_ossc_power_state
 			);			
 		}
+
+		// if (get_i2c_intr_counter() > 10) {
+		// 	LOG("i2c_intr_counter %d", get_i2c_intr_counter());
+		// }
 
 		if(i > 0 && i <= 150000/2)
 			WriteGPIO(PIN_OUT_STATUS_LED, 0);

@@ -8,33 +8,68 @@ typedef enum {
     SPIHeader_Mic = 3
 } SPIHeader;
 
+static uint8_t spi_send_buf[3];
+static uint8_t spi_is_sending = 0;
+
+// void spi_set_is_sending(uint8_t is_sending)
+// {
+//     spi_is_sending = is_sending;
+// }
+
 HAL_StatusTypeDef SendSPIData(uint8_t* buf, size_t size)
 {
     // SPI to FPGA
     // command, data[0], data[1]...
     LOG_DEBUG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
+    memcpy(spi_send_buf, buf, size);
 
+    while (spi_is_sending);
+    
+    spi_is_sending = 1;
     WriteGPIO(PIN_OUT_SPI_SS, 1); // enable, low active
-    HAL_StatusTypeDef result = HAL_SPI_Transmit(&hspi1, buf, size, 100);
-    WriteGPIO(PIN_OUT_SPI_SS, 0);
+    HAL_StatusTypeDef result = HAL_SPI_Transmit_IT(&hspi1, spi_send_buf, size);
     return result;
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    LOG_DEBUG("spi send done.");
+    WriteGPIO(PIN_OUT_SPI_SS, 0);
+    spi_is_sending = 0;
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+    LOG("spi error");
+}
+
+void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    LOG("spi abort");
 }
 
 static uint8_t mouse_left_up = 1;
 static uint8_t mouse_right_up = 1;
 
-#define MOUSE_MOVE_SCALE_FACTOR 8
+//#define MOUSE_MOVE_SCALE_FACTOR 8
 
 static int8_t mouseAccTable[] = {
     0, // 0
     1, // 1
     1, // 2
-    2, // 3
+    1, // 3
     2, // 4
-    3, // 5
-    3, // 6
-    4, // 7
-    4, // 8
+    2, // 5
+    2, // 6
+    3, // 7
+    3, // 8
+    4, // 9
+    4, // 10
+    5, // 11
+    5, // 12
+    6, // 13
+    6, // 14
+    7, // 15
 };
 
 void KeyboardHandleMouseInfo(HID_MOUSE_Info_TypeDef* info)

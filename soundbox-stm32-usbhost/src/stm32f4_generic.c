@@ -161,6 +161,9 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
   /* USER CODE END SPI1_MspInit 1 */
+
+    HAL_NVIC_SetPriority(SPI1_IRQn, 10, 0);
+    HAL_NVIC_EnableIRQ(SPI1_IRQn);
   }
 
 }
@@ -221,7 +224,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
     /* Peripheral clock enable */
     __HAL_RCC_I2C2_CLK_ENABLE();
     /* I2C2 interrupt Init */
-    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 12, 0);
     HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
 
   /* USER CODE BEGIN I2C2_MspInit 1 */
@@ -302,17 +305,22 @@ void OTG_FS_IRQHandler(void)
 		HAL_HCD_IRQHandler(&_hHCD[ID_USB_HOST_FS]);
 }
 
-void EXTI15_10_IRQHandler(void)
-{
-  OnOSSCPowerChanged();
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
-}
+// void EXTI15_10_IRQHandler(void)
+// {
+//   OnOSSCPowerChanged();
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+// }
 
 volatile uint32_t i2c_intr_count = 0;
 
 inline void clear_i2c_intr_counter()
 {
   i2c_intr_count = 0;
+}
+
+inline uint32_t get_i2c_intr_counter()
+{
+  return i2c_intr_count;
 }
 
 void I2C2_EV_IRQHandler(void)
@@ -324,4 +332,9 @@ void I2C2_EV_IRQHandler(void)
     HAL_I2C_EV_IRQHandler(&hi2c2);
   }
   
+}
+
+void SPI1_IRQHandler(void)
+{
+  HAL_SPI_IRQHandler(&hspi1);
 }

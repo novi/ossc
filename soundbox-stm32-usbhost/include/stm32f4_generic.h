@@ -39,6 +39,7 @@ void MX_I2C2_DeInit(void);
 void MX_SPI1_Init(void);
 
 void clear_i2c_intr_counter();
+uint32_t get_i2c_intr_counter();
 
 SPI_HandleTypeDef hspi1;
 I2C_HandleTypeDef hi2c2;
