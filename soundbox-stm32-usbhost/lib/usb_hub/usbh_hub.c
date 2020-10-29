@@ -118,7 +118,7 @@ static USBH_StatusTypeDef USBH_HUB_InterfaceInit (USBH_HandleTypeDef *phost)
 	    if (HUB_Handle->poll  < HUB_MIN_POLL)
 	    	HUB_Handle->poll = HUB_MIN_POLL;
 
-USBH_UsrLog ("device POLL %d, LEN %d", HUB_Handle->poll, HUB_Handle->length);
+		USBH_UsrLog ("device POLL %d, LEN %d", HUB_Handle->poll, HUB_Handle->length);
 
 	    if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80)
 	    {
@@ -206,6 +206,7 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
 static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 {
 	USBH_StatusTypeDef status = USBH_OK;
+	USBH_StatusTypeDef statusTemp = USBH_OK;
 	HUB_HandleTypeDef *HUB_Handle =  (HUB_HandleTypeDef *)phost->USBH_ClassTypeDef_pData[0];
 
     switch(HUB_Handle->state)
@@ -223,8 +224,8 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
      		break;
 
     	case HUB_GET_DATA:
-if(hUSBHost[1].busy)
-	break;
+			if(hUSBHost[1].busy)
+				break;
 
     	    USBH_InterruptReceiveData(phost, HUB_Handle->buffer, HUB_Handle->length, HUB_Handle->InPipe);
     	    HUB_Handle->state = HUB_POLL;
@@ -256,7 +257,7 @@ if(hUSBHost[1].busy)
     		}
     		else if(USBH_LL_GetURBState(phost , HUB_Handle->InPipe) == USBH_URB_ERROR)
     		{
-//LOG1("=");
+				//LOG1("=");
     		}
     		break;
 
@@ -264,9 +265,9 @@ if(hUSBHost[1].busy)
         	HUB_CurPort = get_port_changed();
         	if(HUB_CurPort > 0)
         	{
-//USBH_UsrLog("HUB_CurPort %d", HUB_CurPort);
+				USBH_DbgLog("HUB_CurPort %d", HUB_CurPort);
 
-phost->busy = 1;
+				phost->busy = 1;
 				clear_port_changed(HUB_CurPort);
         		HUB_Handle->state = HUB_PORT_CHANGED;
         	}
@@ -278,11 +279,12 @@ phost->busy = 1;
     	case HUB_PORT_CHANGED:
 
     		// uses EP0
-    		if(get_hub_request(phost, USB_REQUEST_GET_STATUS, HUB_FEAT_SEL_PORT_CONN, HUB_CurPort, HUB_Handle->buffer, sizeof(USB_HUB_PORT_STATUS)) == USBH_OK)
+			statusTemp = get_hub_request(phost, USB_REQUEST_GET_STATUS, HUB_FEAT_SEL_PORT_CONN, HUB_CurPort, HUB_Handle->buffer, sizeof(USB_HUB_PORT_STATUS));
+    		if(statusTemp == USBH_OK)
     		{
     			HUB_ChangeInfo = (USB_HUB_PORT_STATUS *)HUB_Handle->buffer;
 
-debug_port(HUB_Handle->buffer, HUB_ChangeInfo);
+				debug_port(HUB_Handle->buffer, HUB_ChangeInfo);
 
                 if(HUB_ChangeInfo->wPortStatus.PORT_POWER)
                 {
@@ -338,7 +340,12 @@ debug_port(HUB_Handle->buffer, HUB_ChangeInfo);
                     	}
                     }
                 }
-    		}
+    		} else {
+				USBH_DbgLog("HUB_PORT_CHANGED get_hub_request for port %d, failure %d, size=%d", HUB_CurPort, statusTemp, sizeof(USB_HUB_PORT_STATUS));
+				if (statusTemp == USBH_NOT_SUPPORTED) {
+					HUB_Handle->state = HUB_IDLE;
+				}
+			}
     		break;
 
     	case HUB_C_PORT_SUSPEND:
@@ -379,7 +386,7 @@ debug_port(HUB_Handle->buffer, HUB_ChangeInfo);
     		break;
 
     	case HUB_DEV_ATTACHED:
-USBH_UsrLog("HUB_DEV_ATTACHED %d, lowspeed? %d", HUB_CurPort, HUB_ChangeInfo->wPortStatus.PORT_LOW_SPEED);
+			USBH_UsrLog("HUB_DEV_ATTACHED %d, lowspeed? %d", HUB_CurPort, HUB_ChangeInfo->wPortStatus.PORT_LOW_SPEED);
 
 			HUB_Handle->state = HUB_LOOP_PORT_WAIT;
 			attach(phost, HUB_CurPort, HUB_ChangeInfo->wPortStatus.PORT_LOW_SPEED);
@@ -387,7 +394,7 @@ USBH_UsrLog("HUB_DEV_ATTACHED %d, lowspeed? %d", HUB_CurPort, HUB_ChangeInfo->wP
     		break;
 
     	case HUB_DEV_DETACHED:
-USBH_UsrLog("HUB_DEV_DETACHED %d", HUB_CurPort);
+			USBH_UsrLog("HUB_DEV_DETACHED %d", HUB_CurPort);
 
 			HUB_Handle->state = HUB_LOOP_PORT_WAIT;
 			detach(phost, HUB_CurPort);
@@ -404,21 +411,23 @@ USBH_UsrLog("HUB_DEV_DETACHED %d", HUB_CurPort);
     		break;
     }
 
+	USBH_DbgLog("HUB_Handle state updated %d", HUB_Handle->state);
+
 	return status;
 }
 
 static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 {
-if(!phost->hub)
-{
-USBH_UsrLog("EEEERRRRRRROOORRRRRRR");
-return USBH_OK;
-}
+	if(!phost->hub)
+	{
+		USBH_UsrLog("EEEERRRRRRROOORRRRRRR");
+		return USBH_OK;
+	}
 
 	HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *)phost->USBH_ClassTypeDef_pData[0];
 
-if(HUB_Handle->poll != 255)
-USBH_UsrLog("ERR %d %d", HUB_Handle->poll, HUB_Handle->length);
+	if(HUB_Handle->poll != 255)
+	USBH_UsrLog("ERR %d %d", HUB_Handle->poll, HUB_Handle->length);
 
 	if(HUB_Handle->state == HUB_POLL)
 	{
@@ -542,7 +551,7 @@ static uint8_t port_changed(uint8_t *b)
         if(b[0] & (1<<3)) { HUB_Change.bPorts.PORT_3 = 1; }
         if(b[0] & (1<<4)) { HUB_Change.bPorts.PORT_4 = 1; }
 
-USBH_UsrLog("PORT STATUS CHANGE [0x%02X] [%d %d %d %d]", b[0], HUB_Change.bPorts.PORT_1, HUB_Change.bPorts.PORT_2, HUB_Change.bPorts.PORT_3, HUB_Change.bPorts.PORT_4);
+		USBH_UsrLog("PORT STATUS CHANGE [0x%02X] [%d %d %d %d]", b[0], HUB_Change.bPorts.PORT_1, HUB_Change.bPorts.PORT_2, HUB_Change.bPorts.PORT_3, HUB_Change.bPorts.PORT_4);
 
         return HUB_Change.val > 0;
     }
@@ -555,7 +564,7 @@ void detach(USBH_HandleTypeDef *_phost, uint16_t idx)
 	USBH_HandleTypeDef *pphost = &hUSBHost[idx];
 	if(pphost->valid)
 	{
-USBH_UsrLog("detach %d", pphost->address);
+		USBH_UsrLog("detach %d", pphost->address);
 
 		if(pphost->pUser != NULL)
 		{
@@ -593,7 +602,7 @@ USBH_UsrLog("detach %d", pphost->address);
 static void attach(USBH_HandleTypeDef *phost, uint16_t idx, uint8_t lowspeed)
 {
 	USBH_HandleTypeDef *pphost = &hUSBHost[idx];
-USBH_UsrLog("attach hub device %d", idx);
+	USBH_UsrLog("attach hub device %d", idx);
 
 	if(pphost->valid)
 	{

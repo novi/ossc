@@ -606,7 +606,7 @@ USBH_StatusTypeDef USBH_CtlReq     (USBH_HandleTypeDef *phost,
     {
       /* Commands successfully sent and Response Received  */       
       phost->RequestState = CMD_SEND;
-      phost->Control.state =CTRL_IDLE;  
+      phost->Control.state = CTRL_IDLE;  
       status = USBH_OK;      
     }
     else if  (status == USBH_FAIL)

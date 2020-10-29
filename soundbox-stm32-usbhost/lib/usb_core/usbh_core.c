@@ -617,7 +617,7 @@ phost->gState  = HOST_ABORT_STATE;
 
   case HOST_DEV_DISCONNECTED :
     
-USBH_UsrLog("HOST_DEV_DISCONNECTED %d", phost->address);
+  USBH_UsrLog("HOST_DEV_DISCONNECTED %d", phost->address);
 
 	// MORI - Hub disconnecting, remove all plugged devices
 	{
