@@ -105,9 +105,9 @@ static THD_FUNCTION(Thread1, arg) {
   chRegSetThreadName("blinker");
   static uint8_t counter = 0;
   while (true) {
-    palClearPad(GPIOC, GPIOC_LED_BLUE);
+    palClearPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
-    palSetPad(GPIOC, GPIOC_LED_BLUE);
+    palSetPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     chprintf((BaseSequentialStream*)&SD2, "hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );

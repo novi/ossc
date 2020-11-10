@@ -353,7 +353,7 @@
  * @note    Requires @p CH_CFG_USE_MEMCORE.
  */
 #if !defined(CH_CFG_MEMCORE_SIZE)
-#define CH_CFG_MEMCORE_SIZE                 4096
+#define CH_CFG_MEMCORE_SIZE                 0
 #endif
 
 /**

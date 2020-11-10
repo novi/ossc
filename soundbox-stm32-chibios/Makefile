@@ -118,7 +118,7 @@ include $(CHIBIOS)/tools/mk/autobuild.mk
 #include $(CHIBIOS)/test/oslib/oslib_test.mk
 
 # Define linker script file here.
-LDSCRIPT= $(STARTUPLD)/STM32F401x0C.ld
+LDSCRIPT= $(STARTUPLD)/STM32F401xC.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
