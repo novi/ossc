@@ -1,8 +1,8 @@
 # List of all the board related files.
-BOARDSRC = ./Generic_F401CC/board.c
+BOARDSRC = ./SoundBox_F401R/board.c
 
 # Required include directories
-BOARDINC = ./Generic_F401CC
+BOARDINC = ./SoundBox_F401R
 
 # Shared variables
 ALLCSRC += $(BOARDSRC)

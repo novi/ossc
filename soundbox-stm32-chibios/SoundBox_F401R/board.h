@@ -33,8 +33,8 @@
 /*
  * Board identifier.
  */
-#define BOARD_GENERIC_F401CC
-#define BOARD_NAME                  "STM32 F401CC Generic"
+#define BOARD_GENERIC_F401RC
+#define BOARD_NAME                  "SoundBox STM32 F401RC Generic"
 
 /*
  * Board oscillators-related settings.

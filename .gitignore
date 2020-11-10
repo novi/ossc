@@ -19,3 +19,5 @@ software/sys_controller/sys_controller.elf
 .qsys_edit/*
 PLLJ_PLLSPE_INFO.txt
 simulation/
+soundbox-stm32-chibios/build/
+soundbox-stm32-chibios/.dep
