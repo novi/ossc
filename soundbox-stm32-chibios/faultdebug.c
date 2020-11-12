@@ -1,16 +1,5 @@
-// https://interrupt.memfault.com/blog/cortex-m-fault-debug
-
+#include "faultdebug.h"
 #include <inttypes.h>
-
-// NOTE: If you are using CMSIS, the registers can also be
-// accessed through CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk
-#define HALT_IF_DEBUGGING()                              \
-  do {                                                   \
-    if ((*(volatile uint32_t *)0xE000EDF0) & (1 << 0)) { \
-      __asm("bkpt 1");                                   \
-    }                                                    \
-} while (0)
-
 
 typedef struct __attribute__((packed)) ContextStateFrame {
   uint32_t r0;
@@ -22,15 +11,6 @@ typedef struct __attribute__((packed)) ContextStateFrame {
   uint32_t return_address;
   uint32_t xpsr;
 } sContextStateFrame;
-
-#define HARDFAULT_HANDLING_ASM(_x)               \
-  __asm volatile(                                \
-      "tst lr, #4 \n"                            \
-      "ite eq \n"                                \
-      "mrseq r0, msp \n"                         \
-      "mrsne r0, psp \n"                         \
-      "b my_fault_handler_c \n"                  \
-                                                 )
 
 __attribute__((optimize("O0")))
 void HardFault_Handler(void)

@@ -96,10 +96,10 @@ static void ThreadTestHID(void *p) {
 }
 #endif
 
-static volatile uint8_t i2c_rx_bytes = 0;
+static volatile size_t i2c_rx_bytes = 0;
 static volatile uint8_t i2c_has_slave_request = 0;
-static volatile uint8_t txBuff[4] = {0x00, 0x00, 0x00, 0x00};
-static volatile uint8_t rxBuff[4] = {0x00, 0x00, 0x00, 0x00};
+static uint8_t txBuff[4] = {0x00, 0x00, 0x00, 0x00};
+static uint8_t rxBuff[4] = {0x00, 0x00, 0x00, 0x00};
 
 /*
  * Green LED blinker thread, times are in milliseconds.
@@ -118,12 +118,17 @@ static THD_FUNCTION(Thread1, arg) {
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     chprintf((BaseSequentialStream*)&SD2, "hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
+    osalSysLock();
     if (i2c_rx_bytes) {
-        chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, data = %d\r\n", i2c_rx_bytes, rxBuff[0]);
-        // i2c_rx_bytes = 0;
+        chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, ", i2c_rx_bytes);
+        chprintf((BaseSequentialStream*)&SD2, "data = %d\r\n", rxBuff[0]);
+        i2c_rx_bytes = 0;
     }
+    osalSysUnlock();
+
     if (i2c_has_slave_request) {
         chprintf((BaseSequentialStream*)&SD2, "i2c has slave request\r\n");
+        i2c_has_slave_request = 0;
     }
   }
 }
@@ -148,24 +153,33 @@ static const I2CConfig i2c_onfig = {
     STD_DUTY_CYCLE
 };
 
-
+static bool recv_requested = true;
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 {
-    (void)i2cp;
-    (void)rxbuf;
-    (void)rxbytes;
+    // (void)rxbytes;
+    osalSysLock();
     i2c_rx_bytes = rxbytes;
+    osalSysUnlock();
 
+    recv_requested = false;
     i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
+    recv_requested = true;
 }
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
     i2c_has_slave_request = 1;
     // i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
-
-    // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
+    
+    if (!recv_requested) {
+        i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
+    }
 }
+
+// void myOnSystemHalt(const char* reason)
+// {
+//     sdWrite(&SD2, reason, strlen(reason));
+// }
 
 /*
  * Application entry point.
@@ -193,6 +207,8 @@ int main(void) {
   chprintf((BaseSequentialStream*)&SD2, "mcu started, waiting ossc starts\r\n");
 
   osalThreadSleepMilliseconds(100);
+
+    // osalDbgAssert(0, "test error");
 
   i2cStart(&I2CD2, &i2c_onfig);
     i2cSlaveOnRequest(&I2CD2, onI2CSlaveRequest);
