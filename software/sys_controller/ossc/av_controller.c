@@ -808,7 +808,7 @@ int init_hw()
 #endif
 
     // IT6613 officially supports only 100kHz, but 400kHz seems to work
-    I2C_init(I2CA_BASE,ALT_CPU_FREQ,400000);
+    I2C_init(I2CA_BASE,ALT_CPU_FREQ,100000); // 100khz for Sound Box
     //I2C_init(I2C_OPENCORES_1_BASE,ALT_CPU_FREQ,400000);
 
     /* Initialize the character display */

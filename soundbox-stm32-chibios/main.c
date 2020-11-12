@@ -18,6 +18,7 @@
 #include "hal.h"
 // #include "rt_test_root.h"
 // #include "oslib_test_root.h"
+#include "os/hal/extra/hal_i2c_extra.h"
 #include "chprintf.h"
 #include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 #if HAL_USBH_USE_HID
@@ -95,6 +96,11 @@ static void ThreadTestHID(void *p) {
 }
 #endif
 
+static volatile uint8_t i2c_rx_bytes = 0;
+static volatile uint8_t i2c_has_slave_request = 0;
+static volatile uint8_t txBuff[4] = {0x00, 0x00, 0x00, 0x00};
+static volatile uint8_t rxBuff[4] = {0x00, 0x00, 0x00, 0x00};
+
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
@@ -112,6 +118,13 @@ static THD_FUNCTION(Thread1, arg) {
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     chprintf((BaseSequentialStream*)&SD2, "hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
+    if (i2c_rx_bytes) {
+        chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, data = %d\r\n", i2c_rx_bytes, rxBuff[0]);
+        // i2c_rx_bytes = 0;
+    }
+    if (i2c_has_slave_request) {
+        chprintf((BaseSequentialStream*)&SD2, "i2c has slave request\r\n");
+    }
   }
 }
 
@@ -124,6 +137,34 @@ void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len) {
 #endif
 	sdWrite(&SD2, buff, len);
 	sdWrite(&SD2, (const uint8_t *)"\r\n", 2);
+}
+
+/// --- i2c 
+
+static const I2CConfig i2c_onfig = {
+    OPMODE_I2C,
+    100000,
+    // FAST_DUTY_CYCLE_2,
+    STD_DUTY_CYCLE
+};
+
+
+void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
+{
+    (void)i2cp;
+    (void)rxbuf;
+    (void)rxbytes;
+    i2c_rx_bytes = rxbytes;
+
+    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
+}
+
+void onI2CSlaveRequest(I2CDriver *i2cp)
+{
+    i2c_has_slave_request = 1;
+    // i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
+
+    // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
 }
 
 /*
@@ -144,20 +185,23 @@ int main(void) {
   halInit();
   chSysInit();
 
+
   /*
    * Activates the serial driver 2 using the driver default configuration.
    */
   sdStart(&SD2, NULL);
-  sdWrite(&SD2, (const uint8_t *)"start\r\n", 7);
+  chprintf((BaseSequentialStream*)&SD2, "mcu started, waiting ossc starts\r\n");
+
   osalThreadSleepMilliseconds(100);
+
+  i2cStart(&I2CD2, &i2c_onfig);
+    i2cSlaveOnRequest(&I2CD2, onI2CSlaveRequest);
+    i2cSlaveMatchAddress(&I2CD2, 0xc8 >> 1);
+    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
 
   #if STM32_USBH_USE_OTG1
     //VBUS - configured in board.h
     //USB_FS - configured in board.h
-  #endif
-
-  #if STM32_USBH_USE_OTG2
-  #error "TODO: Initialize USB_HS pads"
   #endif
 
   #if HAL_USBH_USE_HID
@@ -172,20 +216,13 @@ int main(void) {
   //start
 #if STM32_USBH_USE_OTG1
     usbhStart(&USBHD1);
-    _usbh_dbgf(&USBHD1, "Started");
-#endif
-#if STM32_USBH_USE_OTG2
-    usbhStart(&USBHD2);
-    _usbh_dbgf(&USBHD2, "Started");
+    _usbh_dbgf(&USBHD1, "USBH Started");
 #endif
 
     for(;;) {
         // sdWrite(&SD2, (const uint8_t *)"loop\r\n", 6);
 #if STM32_USBH_USE_OTG1
         usbhMainLoop(&USBHD1);
-#endif
-#if STM32_USBH_USE_OTG2
-        usbhMainLoop(&USBHD2);
 #endif
         osalThreadSleepMilliseconds(100);
 

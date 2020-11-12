@@ -15,8 +15,9 @@ void mcu_send_data(uint8_t data)
 {
     I2C_start(I2CA_BASE, MCU_I2C_ADDR, 0);
     // I2C_write(I2CA_BASE, regaddr, 0);
-    //I2C_write(I2CA_BASE, data, 0);
+    I2C_write(I2CA_BASE, data, 1);
     //I2C_write(I2CA_BASE, data+1, 0);
-    I2C_write(I2CA_BASE, data+2, 1);
+    // I2C_write(I2CA_BASE, data+2, 0);
+    // I2C_read(I2CA_BASE, 1);
     // TODO: wait ack recv
 }
