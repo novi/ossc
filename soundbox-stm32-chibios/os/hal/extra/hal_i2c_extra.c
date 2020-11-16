@@ -50,7 +50,7 @@ msg_t i2cSlaveMatchAddress(I2CDriver *i2cp, i2caddr_t  i2cadr)
 {
   osalDbgCheck((i2cp != NULL) && (i2cadr != 0x00));
   chSysLock();
-  msg_t result = i2c_lld_matchAddress(i2cp, i2cadr);
+  msg_t result = i2c_lld_match_address(i2cp, i2cadr);
   chSysUnlock();
   return result;
 }
@@ -115,7 +115,7 @@ void i2cSlaveOnRequest(I2CDriver *i2cp, i2c_slave_transmit_callback_t callback)
   /* Check the parameters */
   osalDbgCheck((i2cp != NULL) && (callback != NULL));
   chSysLock();
-  i2c_lld_onRequest(i2cp, callback);
+  i2c_lld_set_slave_transmit_callback(i2cp, callback);
   chSysUnlock();
 }
 
