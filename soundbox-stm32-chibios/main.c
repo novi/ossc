@@ -247,8 +247,8 @@ int main(void) {
         if (i2c_has_slave_request) {
             chprintf((BaseSequentialStream*)&SD2, "i2c has got slave request\r\n");
             // osalThreadSleepMilliseconds(100);
-            // i2cStop(&I2CD2);
-            // setup_i2c_();
+            i2cStop(&I2CD2);
+            setup_i2c_();
             i2c_has_slave_request = 0;
         }
         
