@@ -96,13 +96,13 @@ static void ThreadTestHID(void *p) {
 }
 #endif
 
+/// --- i2c 
 void onI2CSlaveRequest(I2CDriver *i2cp);
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes);
 static size_t i2c_rx_bytes = 0;
 static uint8_t i2c_has_slave_request = 0;
-static uint8_t txBuff[4] = {0x00, 0x00, 0x00, 0x00};
-static uint8_t rxBuff[4] = {0x00, 0x00, 0x00, 0x00};
-/// --- i2c 
+static uint8_t i2c_tx_buf[1] = {0};
+static uint8_t i2c_rx_buf[2] = {0, 0};
 
 static const I2CConfig i2c_config = {
     OPMODE_I2C,
@@ -115,9 +115,13 @@ static void setup_i2c_(void)
 {
     i2cStart(&I2CD2, &i2c_config);
     i2cSlaveOnRequest(&I2CD2, onI2CSlaveRequest);
-    i2cSlaveMatchAddress(&I2CD2, 0xc8 >> 1); 
-    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
-    // while(i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2) != MSG_OK);
+    i2cSlaveMatchAddress(&I2CD2, 0xc8 >> 1); // I2C slave addr
+    // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, i2c_rx_buf, 2);
+    for (size_t i = 0; i < 100; i++) {
+        if (i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, i2c_rx_buf, 2) == MSG_OK) {
+            break;
+        }
+    }
 }
 
 /*
@@ -140,13 +144,8 @@ static THD_FUNCTION(Thread1, arg) {
   }
 }
 
-#if USBH_DEBUG_MULTI_HOST
-void USBH_DEBUG_OUTPUT_CALLBACK(USBHDriver *host, const uint8_t *buff, size_t len) {
-	(void)host;
-  #error TODO
-#else
-void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len) {
-#endif
+void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len)
+{
 	sdWrite(&SD2, buff, len);
 	sdWrite(&SD2, (const uint8_t *)"\r\n", 2);
 }
@@ -161,8 +160,8 @@ void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
-    txBuff[0] = rxBuff[0]+3;
-    i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
+    i2c_tx_buf[0] = 0xa5;
+    i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
     i2c_has_slave_request = 1;
 }
 
@@ -174,7 +173,8 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
 /*
  * Application entry point.
  */
-int main(void) {
+int main(void)
+{
 
 //   IWDG->KR = 0x5555;
 //   IWDG->PR = 7;
@@ -232,8 +232,7 @@ int main(void) {
         // IWDG->KR = 0xAAAA;
 
         if (i2c_rx_bytes) {
-            chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, ", i2c_rx_bytes);
-            chprintf((BaseSequentialStream*)&SD2, "data = %d, %d\r\n", rxBuff[0], rxBuff[1]);
+            chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
             i2c_rx_bytes = 0;
         }
 
