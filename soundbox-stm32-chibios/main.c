@@ -96,10 +96,29 @@ static void ThreadTestHID(void *p) {
 }
 #endif
 
-static volatile size_t i2c_rx_bytes = 0;
-static volatile uint8_t i2c_has_slave_request = 0;
+void onI2CSlaveRequest(I2CDriver *i2cp);
+void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes);
+static size_t i2c_rx_bytes = 0;
+static uint8_t i2c_has_slave_request = 0;
 static uint8_t txBuff[4] = {0x00, 0x00, 0x00, 0x00};
 static uint8_t rxBuff[4] = {0x00, 0x00, 0x00, 0x00};
+/// --- i2c 
+
+static const I2CConfig i2c_config = {
+    OPMODE_I2C,
+    100000,
+    // FAST_DUTY_CYCLE_2,
+    STD_DUTY_CYCLE
+};
+
+static void setup_i2c_(void)
+{
+    i2cStart(&I2CD2, &i2c_config);
+    i2cSlaveOnRequest(&I2CD2, onI2CSlaveRequest);
+    i2cSlaveMatchAddress(&I2CD2, 0xc8 >> 1); 
+    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
+    // while(i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2) != MSG_OK);
+}
 
 /*
  * Green LED blinker thread, times are in milliseconds.
@@ -118,18 +137,6 @@ static THD_FUNCTION(Thread1, arg) {
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     chprintf((BaseSequentialStream*)&SD2, "hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
-    osalSysLock();
-    if (i2c_rx_bytes) {
-        chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, ", i2c_rx_bytes);
-        chprintf((BaseSequentialStream*)&SD2, "data = %d\r\n", rxBuff[0]);
-        i2c_rx_bytes = 0;
-    }
-    osalSysUnlock();
-
-    if (i2c_has_slave_request) {
-        chprintf((BaseSequentialStream*)&SD2, "i2c has slave request\r\n");
-        i2c_has_slave_request = 0;
-    }
   }
 }
 
@@ -144,36 +151,31 @@ void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len) {
 	sdWrite(&SD2, (const uint8_t *)"\r\n", 2);
 }
 
-/// --- i2c 
-
-static const I2CConfig i2c_onfig = {
-    OPMODE_I2C,
-    100000,
-    // FAST_DUTY_CYCLE_2,
-    STD_DUTY_CYCLE
-};
-
 static bool recv_requested = true;
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 {
-    // (void)rxbytes;
-    osalSysLock();
-    i2c_rx_bytes = rxbytes;
-    osalSysUnlock();
+    (void)i2cp;
+	(void)rxbuf;
+	(void)rxbytes;
 
-    recv_requested = false;
-    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
-    recv_requested = true;
+    // osalSysLock();
+    i2c_rx_bytes++;
+    // osalSysUnlock();
+
+    // recv_requested = false;
+    // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
+    // recv_requested = true;
+
 }
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
+    // i2c_rx_bytes = 0;
+    txBuff[0] = rxBuff[0]+3;
+    i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
+
     i2c_has_slave_request = 1;
-    // i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
-    
-    if (!recv_requested) {
-        i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
-    }
+
 }
 
 // void myOnSystemHalt(const char* reason)
@@ -210,10 +212,7 @@ int main(void) {
 
     // osalDbgAssert(0, "test error");
 
-  i2cStart(&I2CD2, &i2c_onfig);
-    i2cSlaveOnRequest(&I2CD2, onI2CSlaveRequest);
-    i2cSlaveMatchAddress(&I2CD2, 0xc8 >> 1);
-    i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 1);
+    setup_i2c_();
 
   #if STM32_USBH_USE_OTG1
     //VBUS - configured in board.h
@@ -243,6 +242,30 @@ int main(void) {
         osalThreadSleepMilliseconds(100);
 
         // IWDG->KR = 0xAAAA;
+
+        if (i2c_rx_bytes) {
+            chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, ", i2c_rx_bytes);
+            chprintf((BaseSequentialStream*)&SD2, "data = %d, %d\r\n", rxBuff[0], rxBuff[1]);
+            i2c_rx_bytes = 0;
+            // osalThreadSleepMilliseconds(100);
+            // i2cStop(&I2CD2);
+            // setup_i2c_();
+            // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
+        }
+        
+        if ( (I2CD2.i2c->CR1 & I2C_CR1_STOP) ) {
+            chprintf((BaseSequentialStream*)&SD2, "i2c may timeout\r\n");
+        }
+
+        if (i2c_has_slave_request) {
+            chprintf((BaseSequentialStream*)&SD2, "i2c has got slave request\r\n");
+            // osalThreadSleepMilliseconds(100);
+            i2cStop(&I2CD2);
+            setup_i2c_();
+            //I2CD2.i2c->CR1 &= ~I2C_CR1_STOP;
+            // I2CD2.i2c->CR1 |= I2C_CR1_STOP;
+            i2c_has_slave_request = 0;
+        }
         
     }
 }
