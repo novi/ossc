@@ -1,0 +1,1 @@
+This has usb hub issue. Use `soundbox-stm32-chibios` instead.
