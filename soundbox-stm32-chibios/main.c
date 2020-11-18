@@ -151,31 +151,19 @@ void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len) {
 	sdWrite(&SD2, (const uint8_t *)"\r\n", 2);
 }
 
-static bool recv_requested = true;
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 {
     (void)i2cp;
 	(void)rxbuf;
 	(void)rxbytes;
-
-    // osalSysLock();
-    i2c_rx_bytes++;
-    // osalSysUnlock();
-
-    // recv_requested = false;
-    // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
-    // recv_requested = true;
-
+    i2c_rx_bytes = rxbytes;
 }
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
-    // i2c_rx_bytes = 0;
     txBuff[0] = rxBuff[0]+3;
     i2cSlaveStartTransmission(&I2CD2, txBuff, 1);
-
     i2c_has_slave_request = 1;
-
 }
 
 // void myOnSystemHalt(const char* reason)
@@ -247,23 +235,20 @@ int main(void) {
             chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, ", i2c_rx_bytes);
             chprintf((BaseSequentialStream*)&SD2, "data = %d, %d\r\n", rxBuff[0], rxBuff[1]);
             i2c_rx_bytes = 0;
-            // osalThreadSleepMilliseconds(100);
-            // i2cStop(&I2CD2);
-            // setup_i2c_();
-            // i2cSlaveOnReceive(&I2CD2, onI2CSlaveReceive, rxBuff, 2);
         }
-        
-        if ( (I2CD2.i2c->CR1 & I2C_CR1_STOP) ) {
-            chprintf((BaseSequentialStream*)&SD2, "i2c may timeout\r\n");
+
+        if (I2CD2.errors) {
+            chprintf((BaseSequentialStream*)&SD2, "i2c error 0x%02x\r\n", I2CD2.errors);
+            // osalThreadSleepMilliseconds(100);
+            i2cStop(&I2CD2);
+            setup_i2c_();
         }
 
         if (i2c_has_slave_request) {
             chprintf((BaseSequentialStream*)&SD2, "i2c has got slave request\r\n");
             // osalThreadSleepMilliseconds(100);
-            i2cStop(&I2CD2);
-            setup_i2c_();
-            //I2CD2.i2c->CR1 &= ~I2C_CR1_STOP;
-            // I2CD2.i2c->CR1 |= I2C_CR1_STOP;
+            // i2cStop(&I2CD2);
+            // setup_i2c_();
             i2c_has_slave_request = 0;
         }
         
