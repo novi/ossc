@@ -18,12 +18,13 @@
 #include "hal.h"
 // #include "rt_test_root.h"
 // #include "oslib_test_root.h"
+#include "log.h"
 #include "os/hal/extra/hal_i2c_extra.h"
-#include "chprintf.h"
 #include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 #if HAL_USBH_USE_HID
 #include "usbh/dev/hid.h"
 #include "chprintf.h"
+#include "keyboard.h"
 
 static THD_WORKING_AREA(waTestHID, 1024);
 
@@ -36,6 +37,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 (int8_t)report[1],
                 (int8_t)report[2],
                 hidp->dev);
+        KeyboardHandleMouseInfo(hidp);
     } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
         _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
@@ -46,6 +48,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 report[6],
                 report[7],
                 hidp->dev);
+        KeyboardHandleKeyboardInfo(hidp);
     } else {
         _usbh_dbgf(hidp->dev->host, "Generic report, %d bytes", len);
     }
@@ -139,7 +142,7 @@ static THD_FUNCTION(Thread1, arg) {
     palSetPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
-    chprintf((BaseSequentialStream*)&SD2, "hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
+    LOG("hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
   }
 }
@@ -165,6 +168,50 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
     i2c_has_slave_request = 1;
 }
 
+extern void spi_callback(SPIDriver *spip);
+// --- SPI
+static const SPIConfig spi_config = {
+    false, // no circular buffer
+    spi_callback, // callback
+    GPIOA,
+    GPIOA_SPI_SS,
+    SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM,
+    0
+};
+
+// --- GPIO
+static uint8_t latest_ossc_power_state = 0;
+
+static void update_mon_out_interface(void)
+{
+	latest_ossc_power_state = palReadPad(GPIOC, GPIOC_OSSC_POWER_SENS);
+    if (latest_ossc_power_state) {
+        palClearPad(GPIOC, GPIOC_MONOUT_INTERFACE_ENABLE); // enable
+    } else {
+        palSetPad(GPIOC, GPIOC_MONOUT_INTERFACE_ENABLE); // disable
+    }
+}
+
+static void update_usb_host_power(void)
+{
+    palSetPad(GPIOC, GPIOC_USB_POWER);
+}
+
+static void init_gpio_value(void)
+{
+	palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
+	palClearPad(GPIOB, GPIOB_STATUS_LED);
+	update_usb_host_power();
+	update_mon_out_interface();
+}
+
+void HandlePowerButton(void)
+{
+    palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
+    osalThreadSleepMilliseconds(100);
+    palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
+}
+
 // void myOnSystemHalt(const char* reason)
 // {
 //     sdWrite(&SD2, reason, strlen(reason));
@@ -176,54 +223,64 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
 int main(void)
 {
 
-//   IWDG->KR = 0x5555;
-//   IWDG->PR = 7;
+    //   IWDG->KR = 0x5555;
+    //   IWDG->PR = 7;
 
-  /*
-   * System initializations.
-   * - HAL initialization, this also initializes the configured device drivers
-   *   and performs the board-specific initializations.
-   * - Kernel initialization, the main() function becomes a thread and the
-   *   RTOS is active.
-   */
-  halInit();
-  chSysInit();
+    /*
+    * System initializations.
+    * - HAL initialization, this also initializes the configured device drivers
+    *   and performs the board-specific initializations.
+    * - Kernel initialization, the main() function becomes a thread and the
+    *   RTOS is active.
+    */
+    halInit();
+    chSysInit();
 
+    init_gpio_value();
 
-  /*
-   * Activates the serial driver 2 using the driver default configuration.
-   */
-  sdStart(&SD2, NULL);
-  chprintf((BaseSequentialStream*)&SD2, "mcu started, waiting ossc starts\r\n");
+    spiStart(&SPID1, &spi_config);
+    spiUnselect(&SPID1);
 
-  osalThreadSleepMilliseconds(100);
+    /*
+    * Activates the serial driver 2 using the driver default configuration.
+    */
+    sdStart(&SD2, NULL);
+    LOG("mcu started, waiting ossc starts\r\n");
+
+    osalThreadSleepMilliseconds(100);
 
     // osalDbgAssert(0, "test error");
 
     setup_i2c_();
 
-  #if STM32_USBH_USE_OTG1
+    #if STM32_USBH_USE_OTG1
     //VBUS - configured in board.h
     //USB_FS - configured in board.h
-  #endif
+    #endif
 
-  #if HAL_USBH_USE_HID
+    #if HAL_USBH_USE_HID
     chThdCreateStatic(waTestHID, sizeof(waTestHID), NORMALPRIO, ThreadTestHID, 0);
-  #endif
+    #endif
 
-  /*
-   * Creates the blinker thread.
-   */
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+    /*
+    * Creates the blinker thread.
+    */
+    chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
-  //start
+    //start
 #if STM32_USBH_USE_OTG1
     usbhStart(&USBHD1);
     _usbh_dbgf(&USBHD1, "USBH Started");
 #endif
 
     for(;;) {
+
+        update_mon_out_interface();
+
         // sdWrite(&SD2, (const uint8_t *)"loop\r\n", 6);
+
+        LOG("loop ossc sens = %d, usb fault = %d\r\n", latest_ossc_power_state, palReadPad(GPIOC, GPIOC_USB_FAULT) );
+
 #if STM32_USBH_USE_OTG1
         usbhMainLoop(&USBHD1);
 #endif
@@ -232,19 +289,19 @@ int main(void)
         // IWDG->KR = 0xAAAA;
 
         if (i2c_rx_bytes) {
-            chprintf((BaseSequentialStream*)&SD2, "i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+            LOG("i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
             i2c_rx_bytes = 0;
         }
 
         if (I2CD2.errors) {
-            chprintf((BaseSequentialStream*)&SD2, "i2c error 0x%02x\r\n", I2CD2.errors);
+            LOG("i2c error 0x%02x\r\n", I2CD2.errors);
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();
         }
 
         if (i2c_has_slave_request) {
-            chprintf((BaseSequentialStream*)&SD2, "i2c has got slave request\r\n");
+            LOG("i2c has got slave request\r\n");
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();

@@ -126,7 +126,8 @@ LDSCRIPT= $(STARTUPLD)/STM32F401xC.ld
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
        main.c \
-       faultdebug.c
+       faultdebug.c \
+       keyboard.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
