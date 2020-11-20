@@ -1,30 +1,12 @@
-/*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
 #include "ch.h"
 #include "hal.h"
-// #include "rt_test_root.h"
-// #include "oslib_test_root.h"
 #include "log.h"
 #include "os/hal/extra/hal_i2c_extra.h"
-#include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
+#include "keyboard.h"
+
 #if HAL_USBH_USE_HID
 #include "usbh/dev/hid.h"
-#include "chprintf.h"
-#include "keyboard.h"
+#include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 
 static THD_WORKING_AREA(waTestHID, 1024);
 
@@ -127,9 +109,7 @@ static void setup_i2c_(void)
     }
 }
 
-/*
- * Green LED blinker thread, times are in milliseconds.
- */
+// -- counter, LED blink thread
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
 
@@ -142,7 +122,7 @@ static THD_FUNCTION(Thread1, arg) {
     palSetPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
-    LOG("hello %d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
+    LOG("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
   }
 }
@@ -163,12 +143,12 @@ void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
-    i2c_tx_buf[0] = 0xa5;
+    i2c_tx_buf[0] = 0xa5; // TODO: dummy for now
     i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
     i2c_has_slave_request = 1;
 }
 
-extern void spi_callback(SPIDriver *spip);
+extern void spi_callback(SPIDriver *spip); // for keyboard.h
 // --- SPI
 static const SPIConfig spi_config = {
     false, // no circular buffer
@@ -192,9 +172,16 @@ static void update_mon_out_interface(void)
     }
 }
 
-static void update_usb_host_power(void)
+// returns non zero if fault
+static uint8_t update_usb_host_power(void)
 {
-    palSetPad(GPIOC, GPIOC_USB_POWER);
+    if (palReadPad(GPIOC, GPIOC_USB_FAULT)) {
+        palClearPad(GPIOC, GPIOC_USB_POWER);
+        return 1;
+    } else {
+        palSetPad(GPIOC, GPIOC_USB_POWER);
+        return 0;
+    }    
 }
 
 static void init_gpio_value(void)
@@ -205,7 +192,7 @@ static void init_gpio_value(void)
 	update_mon_out_interface();
 }
 
-void HandlePowerButton(void)
+void HandlePowerButton(void) // from keyboard.h
 {
     palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
     osalThreadSleepMilliseconds(100);
@@ -217,22 +204,12 @@ void HandlePowerButton(void)
 //     sdWrite(&SD2, reason, strlen(reason));
 // }
 
-/*
- * Application entry point.
- */
 int main(void)
 {
 
     //   IWDG->KR = 0x5555;
     //   IWDG->PR = 7;
 
-    /*
-    * System initializations.
-    * - HAL initialization, this also initializes the configured device drivers
-    *   and performs the board-specific initializations.
-    * - Kernel initialization, the main() function becomes a thread and the
-    *   RTOS is active.
-    */
     halInit();
     chSysInit();
 
@@ -241,30 +218,21 @@ int main(void)
     spiStart(&SPID1, &spi_config);
     spiUnselect(&SPID1);
 
-    /*
-    * Activates the serial driver 2 using the driver default configuration.
-    */
+    // Serial USART2
     sdStart(&SD2, NULL);
     LOG("mcu started, waiting ossc starts\r\n");
 
     osalThreadSleepMilliseconds(100);
+    osalThreadSleepMilliseconds(1000);
 
     // osalDbgAssert(0, "test error");
 
     setup_i2c_();
 
-    #if STM32_USBH_USE_OTG1
-    //VBUS - configured in board.h
-    //USB_FS - configured in board.h
-    #endif
-
     #if HAL_USBH_USE_HID
     chThdCreateStatic(waTestHID, sizeof(waTestHID), NORMALPRIO, ThreadTestHID, 0);
     #endif
 
-    /*
-    * Creates the blinker thread.
-    */
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
     //start
@@ -276,6 +244,11 @@ int main(void)
     for(;;) {
 
         update_mon_out_interface();
+        if (update_usb_host_power()) {
+            while (1) {
+                LOG("USB host power fault\r\n");
+            }
+        }
 
         // sdWrite(&SD2, (const uint8_t *)"loop\r\n", 6);
 
@@ -289,7 +262,7 @@ int main(void)
         // IWDG->KR = 0xAAAA;
 
         if (i2c_rx_bytes) {
-            LOG("i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+            LOG_DEBUG("i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
             i2c_rx_bytes = 0;
         }
 
@@ -301,7 +274,7 @@ int main(void)
         }
 
         if (i2c_has_slave_request) {
-            LOG("i2c has got slave request\r\n");
+            LOG_DEBUG("i2c has got slave request\r\n");
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();
