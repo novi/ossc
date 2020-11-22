@@ -11,7 +11,7 @@ typedef enum {
 #define SPI_DATA_SIZE_MAX (3)
 static uint8_t spi_send_buf[SPI_DATA_SIZE_MAX];
 static uint8_t spi_recv_buf[SPI_DATA_SIZE_MAX];
-static uint8_t spi_is_sending = 0;
+volatile uint8_t spi_is_sending = 0;
 
 void SendSPIData(uint8_t* buf, size_t size)
 {
@@ -19,21 +19,36 @@ void SendSPIData(uint8_t* buf, size_t size)
 
     // SPI to FPGA
     // command, data[0], data[1]...
-    LOG_DEBUG("send spi %02x %02x %02x ", buf[0], buf[1], buf[2]);
+    LOG_DEBUG("send spi %02x %02x %02x", buf[0], buf[1], buf[2]);
+
+    systime_t start, end;
+    start = osalOsGetSystemTimeX();
+    end = start + OSAL_MS2I(10); // in ms
+    while (spi_is_sending) {
+        if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+            // timeout
+            LOG_DEBUG("spi send data wait timeout");
+            break;
+        }
+    }
+
+    // for(size_t i = 0; spi_is_sending && i < 10000; i++);
+    // while (spi_is_sending);    
+    
     memcpy(spi_send_buf, buf, size);
 
-    while (spi_is_sending);
-    
     spi_is_sending = 1;
-    spiSelect(&SPID1);
-    spiStartExchange(&SPID1, size, spi_send_buf, spi_recv_buf); 
+    spiSelectI(&SPID1);
+    spiStartExchangeI(&SPID1, size, spi_send_buf, spi_recv_buf);
 }
 
 void spi_callback(SPIDriver *spip)
 {
-    LOG_DEBUG("spi send done.");
-    spiUnselect(&SPID1);
+    (void)spip;
+    spiUnselectI(&SPID1);
     spi_is_sending = 0;
+
+    LOG_DEBUG("spi send callback state %d", spip->state);
 }
 
 static uint8_t mouse_left_up = 1;
@@ -60,9 +75,8 @@ static int8_t mouseAccTable[] = {
     7, // 15
 };
 
-void KeyboardHandleMouseInfo(USBHHIDDriver *hidp)
+void KeyboardHandleMouseInfo(const uint8_t *report)
 {
-    uint8_t *report = (uint8_t *)hidp->config->report_buffer;
     uint8_t is_report_left_down = report[0] & 0x1;
     uint8_t is_report_right_down = report[0] & 0x2;
 
@@ -294,13 +308,11 @@ static uint8_t latestModifier = 0;
 #define REPORT_MODIFIER_ALT_RIGHT 6
 #define REPORT_MODIFIER_GUI_RIGHT 7
 
-void KeyboardHandleKeyboardInfo(USBHHIDDriver *hidp)
+void KeyboardHandleKeyboardInfo(const uint8_t *report)
 {
     // data to send
     uint8_t data[3] = {SPIHeader_Keyboard, 0, 0}; // Header, Modifier, Scancode
-
-    uint8_t *report = (uint8_t *)hidp->config->report_buffer;
-    uint8_t *report_keys = &report[2];
+    const uint8_t *report_keys = &report[2];
 
     uint8_t nextModifierCode = 0;
     #if USE_RIGHT_CONTROL_AS_COMMAND

@@ -8,18 +8,22 @@
 #include "usbh/dev/hid.h"
 #include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 
+#define SHOW_MOUSE_LOG (0)
+
 static THD_WORKING_AREA(waTestHID, 1024);
 
 static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
-    uint8_t *report = (uint8_t *)hidp->config->report_buffer;
+    const uint8_t *report = (const uint8_t *)hidp->config->report_buffer;
 
     if (hidp->type == USBHHID_DEVTYPE_BOOT_MOUSE) {
+        #if SHOW_MOUSE_LOG
         _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
                 report[0],
                 (int8_t)report[1],
                 (int8_t)report[2],
                 hidp->dev);
-        KeyboardHandleMouseInfo(hidp);
+        #endif
+        KeyboardHandleMouseInfo(report);
     } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
         _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
@@ -30,7 +34,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 report[6],
                 report[7],
                 hidp->dev);
-        KeyboardHandleKeyboardInfo(hidp);
+        KeyboardHandleKeyboardInfo(report);
     } else {
         _usbh_dbgf(hidp->dev->host, "Generic report, %d bytes", len);
     }
@@ -143,6 +147,7 @@ void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
+    (void)i2cp;
     i2c_tx_buf[0] = 0xa5; // TODO: dummy for now
     i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
     i2c_has_slave_request = 1;
@@ -175,6 +180,8 @@ static void update_mon_out_interface(void)
 // returns non zero if fault
 static uint8_t update_usb_host_power(void)
 {
+    palSetPad(GPIOC, GPIOC_USB_POWER);
+    return 0;
     if (palReadPad(GPIOC, GPIOC_USB_FAULT)) {
         palClearPad(GPIOC, GPIOC_USB_POWER);
         return 1;
@@ -252,7 +259,7 @@ int main(void)
 
         // sdWrite(&SD2, (const uint8_t *)"loop\r\n", 6);
 
-        LOG("loop ossc sens = %d, usb fault = %d\r\n", latest_ossc_power_state, palReadPad(GPIOC, GPIOC_USB_FAULT) );
+        // LOG("loop ossc sens = %d, usb fault = %d\r\n", latest_ossc_power_state, palReadPad(GPIOC, GPIOC_USB_FAULT) );
 
 #if STM32_USBH_USE_OTG1
         usbhMainLoop(&USBHD1);
@@ -262,7 +269,7 @@ int main(void)
         // IWDG->KR = 0xAAAA;
 
         if (i2c_rx_bytes) {
-            LOG_DEBUG("i2c recv %d bytes, data = %d, %d\r\n", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+            LOG_DEBUG("i2c recv %d bytes, data = %d, %d", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
             i2c_rx_bytes = 0;
         }
 
@@ -274,7 +281,7 @@ int main(void)
         }
 
         if (i2c_has_slave_request) {
-            LOG_DEBUG("i2c has got slave request\r\n");
+            LOG_DEBUG("i2c has got slave request");
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();
