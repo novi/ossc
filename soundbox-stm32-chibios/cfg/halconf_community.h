@@ -236,7 +236,7 @@
 
 /* HID */
 #define HAL_USBH_USE_HID                              TRUE
-#define HAL_USBHHID_MAX_INSTANCES                     3
+#define HAL_USBHHID_MAX_INSTANCES                     4
 #define HAL_USBHHID_USE_INTERRUPT_OUT                 FALSE
 
 /* HUB */

@@ -22,6 +22,14 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 (int8_t)report[1],
                 (int8_t)report[2],
                 hidp->dev);
+        #else
+        if (report[0]) {
+            _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
+                report[0],
+                (int8_t)report[1],
+                (int8_t)report[2],
+                hidp->dev);
+        }
         #endif
         KeyboardHandleMouseInfo(report);
     } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
@@ -63,9 +71,9 @@ static void ThreadTestHID(void *p) {
             if (usbhhidGetState(hidp) == USBHHID_STATE_ACTIVE) {
                 _usbh_dbgf(hidp->dev->host, "HID: Connected, HID%d", i);
                 usbhhidStart(hidp, &hidcfg[i]);
-                if (usbhhidGetType(hidp) != USBHHID_DEVTYPE_GENERIC) {
+                // if (usbhhidGetType(hidp) != USBHHID_DEVTYPE_GENERIC) {
                     usbhhidSetIdle(hidp, 0, 0);
-                }
+                // }
                 kbd_led_states[i] = 1;
             } else if (usbhhidGetState(hidp) == USBHHID_STATE_READY) {
                 if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
@@ -74,6 +82,7 @@ static void ThreadTestHID(void *p) {
                     if (val == 0x08) {
                         val = 1;
                     }
+                    val = 0; // turn off keyboard led status
                     usbhhidSetReport(hidp, 0, USBHHID_REPORTTYPE_OUTPUT, &val, 1);
                     kbd_led_states[i] = val;
                 }
