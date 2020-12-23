@@ -537,7 +537,7 @@
                                      PIN_ODR_HIGH(GPIOB_PIN11) |            \
                                      PIN_ODR_HIGH(GPIOB_PIN12) |            \
                                      PIN_ODR_HIGH(GPIOB_PIN13) |            \
-                                     PIN_ODR_HIGH(GPIOB_STATUS_LED) |       \
+                                     PIN_ODR_LOW(GPIOB_STATUS_LED) |       \
                                      PIN_ODR_HIGH(GPIOB_PIN15))
 #define VAL_GPIOB_AFRL              (PIN_AFIO_AF(GPIOB_ARD_A3, 0U) |        \
                                      PIN_AFIO_AF(GPIOB_PIN1, 0U) |          \
@@ -644,11 +644,11 @@
                                      PIN_ODR_HIGH(GPIOC_ARD_A4) |           \
                                      PIN_ODR_HIGH(GPIOC_PIN2) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN3) |             \
-                                     PIN_ODR_HIGH(GPIOC_NEXT_POWERSW) |             \
-                                     PIN_ODR_HIGH(GPIOC_MONOUT_INTERFACE_ENABLE) |             \
+                                     PIN_ODR_LOW(GPIOC_NEXT_POWERSW) |             \
+                                     PIN_ODR_LOW(GPIOC_MONOUT_INTERFACE_ENABLE) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN6) |             \
                                      PIN_ODR_HIGH(GPIOC_ARD_D9) |           \
-                                     PIN_ODR_HIGH(GPIOC_USB_POWER) |             \
+                                     PIN_ODR_LOW(GPIOC_USB_POWER) |             \
                                      PIN_ODR_HIGH(GPIOC_USB_FAULT) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN10) |            \
                                      PIN_ODR_HIGH(GPIOC_PIN11) |            \

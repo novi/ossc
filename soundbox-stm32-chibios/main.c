@@ -23,7 +23,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 (int8_t)report[2],
                 hidp->dev);
         #else
-        if (report[0]) {
+        if (report[0] && report[1] == 0 && report[2] == 0) {
             _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
                 report[0],
                 (int8_t)report[1],
@@ -202,14 +202,14 @@ static uint8_t update_usb_host_power(void)
 
 static void init_gpio_value(void)
 {
-	palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
-	palClearPad(GPIOB, GPIOB_STATUS_LED);
 	update_usb_host_power();
 	update_mon_out_interface();
 }
 
 void HandlePowerButton(void) // from keyboard.h
 {
+    LOG_DEBUG("Handle Power Button\r\n");
+
     palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
     osalThreadSleepMilliseconds(100);
     palClearPad(GPIOC, GPIOC_NEXT_POWERSW);

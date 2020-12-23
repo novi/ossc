@@ -244,7 +244,7 @@ uint8_t hidkeycodeToNextscancode(uint8_t keycode)
         uint8_t c = keymap[keycode];
         if (c) return c;
     }
-    LOG("unknown hid keycode 0x%02x", keycode);
+    LOG("unknown hid keycode 0x%02x that there is not on next keyboard", keycode);
     return 0;
 }
 
