@@ -158,7 +158,8 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
 {
     (void)i2cp;
     i2c_tx_buf[0] = 0xa5; // TODO: dummy for now
-    i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
+    // TODO: send slave transmission if needed
+    // i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
     i2c_has_slave_request = 1;
 }
 
