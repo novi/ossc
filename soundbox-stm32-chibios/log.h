@@ -14,12 +14,10 @@
 #if DEBUG_LOG
 #define LOG_DEBUG(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
 #else
-#define LOG_DEBUG(...) LOG_DUMMY(__VA_ARGS__)
-inline void LOG_DUMMY(const char *fmt, ...) {
-}
+#define LOG_DEBUG(...) do { } while(0);
 #endif
 
-#define LOG(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
+#define LOG(...) do { } while(0); // _usbh_dbgf(&USBHD1, __VA_ARGS__);, not work?
 #define LOG_MAIN(...) chprintf((BaseSequentialStream*)&SD2, __VA_ARGS__); // use from main thread
 
 
