@@ -206,13 +206,10 @@ static void init_gpio_value(void)
 	update_mon_out_interface();
 }
 
+static bool shouldHandlePowerButton = false;
 void HandlePowerButton(void) // from keyboard.h
 {
-    LOG_DEBUG("Handle Power Button\r\n");
-
-    palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
-    osalThreadSleepMilliseconds(100);
-    palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
+    shouldHandlePowerButton = true;
 }
 
 // void myOnSystemHalt(const char* reason)
@@ -236,7 +233,7 @@ int main(void)
 
     // Serial USART2
     sdStart(&SD2, NULL);
-    LOG("mcu started, waiting ossc starts\r\n");
+    LOG_MAIN("mcu started, waiting ossc starts\r\n");
 
     osalThreadSleepMilliseconds(100);
     osalThreadSleepMilliseconds(1000);
@@ -295,6 +292,14 @@ int main(void)
             i2cStop(&I2CD2);
             setup_i2c_();
             i2c_has_slave_request = 0;
+        }
+
+        if (shouldHandlePowerButton) {
+            shouldHandlePowerButton = false;
+            LOG_DEBUG("Handle Power Button\r\n");
+            palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
+            osalThreadSleepMilliseconds(100);
+            palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
         }
         
     }

@@ -19,7 +19,8 @@ inline void LOG_DUMMY(const char *fmt, ...) {
 }
 #endif
 
-#define LOG(...) chprintf((BaseSequentialStream*)&SD2, __VA_ARGS__);
+#define LOG(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
+#define LOG_MAIN(...) chprintf((BaseSequentialStream*)&SD2, __VA_ARGS__); // use from main thread
 
 
 #ifdef __cplusplus
