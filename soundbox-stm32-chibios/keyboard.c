@@ -191,7 +191,7 @@ uint8_t hidkeycodeToNextscancode(uint8_t keycode)
         0x2e, // KEY_COMMA
         0x2f, // KEY_DOT
         0x30, // KEY_SLASH
-        0, // KEY_CAPSLOCK, // TODO: map to control
+        0, // KEY_CAPSLOCK,
 
         0x01, // KEY_F1, // Brightness down
         0x19, // F2, // Brightness up
@@ -315,6 +315,14 @@ void KeyboardHandleKeyboardInfo(const uint8_t *report)
     const uint8_t *report_keys = &report[2];
 
     uint8_t nextModifierCode = 0;
+
+    // Map caps lock to control key
+    for(uint8_t i = 0; i < 6; i++) {
+        if (report_keys[i] == 0x39) { // USB(HID) caps lock key
+            nextModifierCode |= 1 << 0; // control key
+        }
+    }
+
     #if USE_RIGHT_CONTROL_AS_COMMAND
     if ( (report[0] & (1 << REPORT_MODIFIER_CTRL_LEFT)) ) {
     #else
