@@ -135,7 +135,7 @@ static THD_FUNCTION(Thread1, arg) {
     palSetPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
-    LOG("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
+    LOG_MAIN("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
     counter++;
   }
 }
@@ -259,7 +259,7 @@ int main(void)
         update_mon_out_interface();
         if (update_usb_host_power()) {
             while (1) {
-                LOG("USB host power fault\r\n");
+                LOG_MAIN("USB host power fault\r\n");
             }
         }
 
@@ -280,7 +280,7 @@ int main(void)
         }
 
         if (I2CD2.errors) {
-            LOG("i2c error 0x%02x\r\n", I2CD2.errors);
+            LOG_MAIN("i2c error 0x%02x\r\n", I2CD2.errors);
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();
@@ -301,6 +301,5 @@ int main(void)
             osalThreadSleepMilliseconds(100);
             palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
         }
-        
     }
 }
