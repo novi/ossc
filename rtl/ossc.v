@@ -22,10 +22,10 @@
 
 module ossc (
     input clk27,
-    input ir_rx,
+    // input ir_rx,
     inout scl,
     inout sda,
-    input [1:0] btn,
+    // input [1:0] btn,
     input [7:0] R_in,
     input [7:0] G_in,
     input [7:0] B_in,
@@ -41,17 +41,128 @@ module ossc (
     output reg HDMI_TX_HS,
     output reg HDMI_TX_VS,
     input HDMI_TX_INT_N,
-    input HDMI_TX_MODE,
+    // input HDMI_TX_MODE,
     output hw_reset_n,
-    output LED_G,
-    output LED_R,
-    output LCD_RS,
-    output LCD_CS_N,
-    output LCD_BL,
-    output SD_CLK,
-    inout SD_CMD,
-    inout [3:0] SD_DAT
+    // output LED_G,
+    // output LED_R, // LED0
+    // output LCD_RS,
+    // output LCD_CS_N,
+    // output LCD_BL,
+    // output SD_CLK,
+    // inout SD_CMD,
+    // inout [3:0] SD_DAT,
+
+    // NeXT Sound Box
+    input from_kb, // and BTN0
+    output to_kb,
+    input mon_clk,
+    input to_mon,
+    output from_mon,
+    output spdif_led0_out,
+    input mc_sck,
+    input mc_mosi,
+    input mc_ss,
+    output mc_miso,
+    input mic_bclk,
+    input mic_lrck,
+    input mic_data,
+    input audio_mclk,
+    output audio_bclk,
+    output audio_lrck,
+    output audio_data
 );
+
+// NeXT Sound Box additional start
+// disable unused funcions
+wire LED_G, LED_R, LCD_BL, SD_CLK;
+wire HDMI_TX_MODE;
+assign HDMI_TX_MODE = 0;
+wire SD_CMD;
+//assign SD_CMD = 1;
+wire [3:0] SD_DAT;
+//assign SD_DAT = 4'b1111;
+wire ir_rx;
+assign ir_rx = 0;
+wire [1:0] btn;
+assign btn = 2'b11;
+reg is_mono = 1;
+
+wire lcd_bl_on, spdif_led0;
+assign lcd_bl_on = 0;
+
+always@ (*) begin
+    if (sys_ctrl[4]) // use led from software
+        spdif_led0_out = sys_ctrl[5];
+    else
+        spdif_led0_out = spdif_led0;
+end
+
+wire latest_keycode_valid;
+wire [15:0] latest_keycode;
+reg [15:0] latest_keycode_L;
+always @(posedge clk27 or negedge po_reset_n)
+begin
+    if (!po_reset_n) begin
+        latest_keycode_L <= 16'h0000;
+    end else if (latest_keycode_valid) begin
+        latest_keycode_L <= latest_keycode;
+    end
+end
+
+wire is_muted, volume_db_valid;
+wire [11:0] volume_db; // Lch, Rch
+reg [11:0] volume_db_L;
+reg [11:0] volume_db_LL;
+reg volume_db_valid_L, volume_db_valid_LL;
+reg is_muted_L, is_muted_LL;
+always @(posedge clk27 or negedge po_reset_n)
+begin
+    if (!po_reset_n) begin
+        is_muted_L <= 1'b1;
+        is_muted_LL <= 1'b1;
+        volume_db_L <= 12'hfff;
+        volume_db_LL <= 12'hfff;
+    end else begin
+        is_muted_L <= is_muted;
+        is_muted_LL <= is_muted_L;
+        volume_db_valid_L <= volume_db_valid;
+        volume_db_valid_LL <= volume_db_valid_L;
+        if (volume_db_valid_LL) begin
+            volume_db_L <= volume_db;
+            volume_db_LL <= volume_db_L;
+        end
+    end
+end
+
+NextSoundBox nextsb(
+    clk27,
+    hw_reset_n,
+    from_kb,
+    to_kb,
+    mon_clk,
+    to_mon,
+    from_mon,
+    spdif_led0,
+    mc_sck,
+    mc_mosi,
+    mc_ss,
+    mc_miso,
+    mic_bclk,
+    mic_lrck,
+    mic_data,
+    audio_mclk,
+    audio_bclk,
+    audio_lrck,
+    audio_data,
+    latest_keycode,
+    latest_keycode_valid,
+    is_muted,
+    volume_db, 
+    volume_db_valid,
+    sys_ctrl[6] // enable_next_keyboard
+);
+
+// NeXT Sound Box end
 
 
 wire [15:0] sys_ctrl;
@@ -123,9 +234,16 @@ begin
         VSYNC_in_L <= 1'b0;
         FID_in_L <= 1'b0;
     end else begin
-        R_in_L <= R_in;
+        // NeXT Sound Box mono mode start
+        if (is_mono) begin
+            R_in_L <= G_in;
+            B_in_L <= G_in;
+        end else begin
+            R_in_L <= R_in;
+            B_in_L <= B_in;
+        end
+        // NeXT Sound Box mono mode end
         G_in_L <= G_in;
-        B_in_L <= B_in;
         HSYNC_in_L <= HSYNC_in;
         VSYNC_in_L <= VSYNC_in;
         FID_in_L <= FID_in;
@@ -177,9 +295,9 @@ assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0);
 `endif
 
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
-assign LCD_CS_N = sys_ctrl[6];
-assign LCD_RS = sys_ctrl[5];
-wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
+// assign LCD_CS_N = sys_ctrl[6];
+// assign LCD_RS = sys_ctrl[5];
+// wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
 wire [1:0] lcd_bl_time = sys_ctrl[3:2];
 assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 
@@ -239,7 +357,7 @@ sys sys_inst(
     .i2c_opencores_1_export_sda_pad_io      (SD_CMD),
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
-    .pio_1_controls_in_export               ({ir_code_cnt, 4'b0000, pll_activeclock, HDMI_TX_MODE_LL, btn_LL, ir_code}),
+    .pio_1_controls_in_export               ({volume_db_LL, pll_activeclock, HDMI_TX_MODE_LL, 1'b1, is_muted_LL, latest_keycode_L}),
     .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
     .sc_config_0_sc_if_sc_status2_i         ({12'h000, pcnt_frame}),
     .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),

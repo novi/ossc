@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "request": "launch",
+            "name": "OpenOCD-Debug",
+            "executable": "./build/ch.elf",
+            "configFiles": [
+                "interface/stlink-v2.cfg",
+                "target/stm32f4x_stlink.cfg"
+            ],
+            "cwd": "${workspaceRoot}",
+            "gdbpath": "arm-none-eabi-gdb",
+            "svdFile": "STM32F401x.svd",
+        }
+    ]
+}

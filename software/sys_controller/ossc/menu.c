@@ -200,7 +200,7 @@ MENU(menu_postproc, P99_PROTECT({ \
     { "Mask color",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.mask_color,  OPT_NOWRAP,   SETTING_ITEM(mask_color_desc) } } },
     { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
     { LNG("Reverse LPF","ｷﾞｬｸLPF"),              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
-    { LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
+    // { LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
 }))
 
 MENU(menu_compatibility, P99_PROTECT({ \
@@ -229,17 +229,17 @@ MENU(menu_settings, P99_PROTECT({ \
     { LNG("Link prof->input","Link prof->input"), OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.link_av,  OPT_WRAP, AV1_RGBs, AV_LAST, link_av_desc } } },
     { LNG("Link input->prof","Link input->prof"),   OPT_AVCONFIG_SELECTION, { .sel = { &profile_link,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
-    { "Autodetect input",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_input,     OPT_WRAP, SETTING_ITEM(auto_input_desc) } } },
-    { "Auto AV1 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av1_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "Auto AV2 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av2_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "Auto AV3 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av3_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
-    { "OSD enable",                             OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable_pre,   OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
-    { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout_pre,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
-#ifndef DEBUG
-    {     "<Import sett.  >",                     OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
-    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"), OPT_FUNC_CALL,          { .fun = { fw_update, NULL } } },
-#endif
+//    { "Autodetect input",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_input,     OPT_WRAP, SETTING_ITEM(auto_input_desc) } } },
+//    { "Auto AV1 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av1_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+//    { "Auto AV2 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av2_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+//    { "Auto AV3 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av3_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+//    { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
+//    { "OSD enable",                             OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable_pre,   OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
+//    { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout_pre,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
+// #ifndef DEBUG
+//     {     "<Import sett.  >",                     OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
+//     { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"), OPT_FUNC_CALL,          { .fun = { fw_update, NULL } } },
+// #endif
 }))
 
 
@@ -259,10 +259,14 @@ MENU(menu_main, P99_PROTECT({ \
 menunavi navi[] = {{&menu_main, 0}, {NULL, 0}, {NULL, 0}};
 alt_u8 navlvl = 0;
 
+// for Sound Box
+extern menucode_id menu_code;
 
 void display_menu(alt_u8 forcedisp)
 {
-    menucode_id code = NO_ACTION;
+    // menucode_id code = NO_ACTION; Disabled for Sound Box
+    menucode_id code = menu_code;
+
     menuitem_type type;
     alt_u8 *val, val_wrap, val_min, val_max;
     alt_u16 *val_u16, val_u16_min, val_u16_max;
@@ -270,12 +274,12 @@ void display_menu(alt_u8 forcedisp)
 
     for (i=RC_OK; i < RC_INFO; i++) {
         if (remote_code == rc_keymap[i]) {
-            code = i;
+            // code = i; Disabled for Sound Box
             break;
         }
     }
 
-    if (!forcedisp && !remote_code)
+    if (!forcedisp && !remote_code && !code)
         return;
 
     type = navi[navlvl].m->items[navi[navlvl].mp].type;
@@ -295,6 +299,7 @@ void display_menu(alt_u8 forcedisp)
             menu_active = 0;
             osd->osd_config.menu_active = 0;
             lcd_write_status();
+            menu_code = NO_ACTION;
             return;
         }
         break;
@@ -405,6 +410,8 @@ void display_menu(alt_u8 forcedisp)
     }
 
     lcd_write_menu();
+
+    menu_code = NO_ACTION;
 }
 
 static void vm_select() {

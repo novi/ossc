@@ -150,15 +150,15 @@ C_SRCS += it6613/it6613_drv.c
 C_SRCS += it6613/it6613_sys.c
 C_SRCS += tvp7002/tvp7002.c
 C_SRCS += tvp7002/video_modes.c
-C_SRCS += ths7353/ths7353.c
-C_SRCS += pcm1862/pcm1862.c
-C_SRCS += spi_charlcd/lcd.c
+#C_SRCS += ths7353/ths7353.c
+#C_SRCS += pcm1862/pcm1862.c
+#C_SRCS += spi_charlcd/lcd.c
 C_SRCS += memory/flash.c
-C_SRCS += memory/sdcard.c
+#C_SRCS += memory/sdcard.c
 C_SRCS += ossc/av_controller.c
 C_SRCS += ossc/avconfig.c
-C_SRCS += ossc/controls.c
-C_SRCS += ossc/firmware.c
+#C_SRCS += ossc/controls.c
+#C_SRCS += ossc/firmware.c
 ifeq ($(OSDLANG),JP)
 C_SRCS += ossc/menu_sjis.c
 else
@@ -166,9 +166,15 @@ C_SRCS += ossc/menu.c
 endif
 C_SRCS += ossc/userdata.c
 C_SRCS += ossc/utils.c
-C_SRCS += ulibSD/sd_io.c
-C_SRCS += ulibSD/spi_io.c
+#C_SRCS += ulibSD/sd_io.c
+#C_SRCS += ulibSD/spi_io.c
+C_SRCS += soundbox/soundbox.c
+C_SRCS += soundbox/mcu.c
+C_SRCS += soundbox/control_sb.c
+C_SRCS += tlv320/tlv320adc3100.c
 CXX_SRCS :=
+CXX_SRCS += pcm5122/pcm5122.cpp
+CXX_SRCS += pcm5122/PCM51xx.cpp
 ASM_SRCS := crt0.boot_E.S
 
 
@@ -211,6 +217,9 @@ SYS_LIB :=
 BSP_ROOT_DIR := ../sys_controller_bsp/
 
 # List of application specific include directories, library directories and library names
+APP_INCLUDE_DIRS += tlv320
+APP_INCLUDE_DIRS += pcm5122
+APP_INCLUDE_DIRS += soundbox
 APP_INCLUDE_DIRS += it6613
 APP_INCLUDE_DIRS += tvp7002
 APP_INCLUDE_DIRS += ths7353

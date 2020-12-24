@@ -1,3 +1,9 @@
 [submodule "ip/pulpino_qsys"]
 	path = ip/pulpino_qsys
 	url = https://github.com/marqs85/pulpino_qsys.git
+[submodule "soundbox-stm32-chibios/ChibiOS-Contrib"]
+	path = soundbox-stm32-chibios/ChibiOS-Contrib
+	url = https://github.com/novi/ChibiOS-Contrib.git
+[submodule "soundbox-stm32-chibios/ChibiOS"]
+	path = soundbox-stm32-chibios/ChibiOS
+	url = https://github.com/novi/ChibiOS.git
