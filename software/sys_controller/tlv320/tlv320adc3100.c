@@ -26,6 +26,10 @@ void tlv320_set_page(uint8_t page);
 #define REG_ADC_VOLUME 82
 #define REG_MICBIAS ((1 << 8) | 51) // page 1, reg 51
 
+#define REG_R_PGA_55 ((1 << 8) | 55)
+#define REG_R_PGA_57 ((1 << 8) | 57)
+#define REG_R_PGA_GAIN_60 ((1 << 8) | 60)
+
 
 static uint8_t currentPage = 0;
 
@@ -75,9 +79,6 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_SW_RESET, 1); // software reset
     usleep(100); // wait for reset
     uint8_t aosr_on_reset = tlv320adc_reg_read(REG_ADC_AOSR);
-
-    tlv320adc_reg_write(REG_ADC_INTERFACE_1, 0xc); // I2S 16bit, BLCK is out, WCLK is out
-    tlv320adc_reg_write(REG_ADC_INTERFACE_2, 0x3); // BDIV_CLKIN = ADC_MOD_CLK
     // fs=8000 (Hz)
     // MCLK=22579200 (Hz)
     // PLL CLK = 91,728,000
@@ -88,18 +89,24 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_PLL_J, 8); // J = 8
     tlv320adc_reg_write(REG_PLL_D_MSB, 0);
     tlv320adc_reg_write(REG_PLL_D_LSB, 125); // D = 125
+    tlv320adc_reg_write(REG_PLL_P_R, 0x80 | (2 << 4) |  1); // PLL ON, P = 2, R = 1
+    usleep(100); // wait for PLL is stabilized
+
     tlv320adc_reg_write(REG_ADC_NADC, 0x80 | 7); // NADC = 7, NADC ON
     tlv320adc_reg_write(REG_ADC_MADC, 0x80 | 14); // MADC = 14, MADC ON
     tlv320adc_reg_write(REG_ADC_AOSR, 117); // AOSR = 117
-    tlv320adc_reg_write(REG_PLL_P_R, 0x80 | (2 << 4) |  1); // PLL ON, P = 2, R = 1
+    tlv320adc_reg_write(REG_ADC_INTERFACE_1, 0xc); // I2S 16bit, BLCK is out, WCLK is out
+    tlv320adc_reg_write(REG_ADC_INTERFACE_2, 0x3); // BDIV_CLKIN = ADC_MOD_CLK
     tlv320adc_reg_write(REG_BCLK_N_DIV, 0x80 | 1); // BCLK OUT divider N = 1 and the divider is ON
+    
+    tlv320adc_reg_write(REG_MICBIAS, 1 << 5); // MICBIAS 2.0volts
+    tlv320adc_reg_write(REG_R_PGA_55, 0x3c); // differential pair only
+    tlv320adc_reg_write(REG_R_PGA_57, 0x3c); // not connect Lch input to Rch PGA
+    tlv320adc_reg_write(REG_R_PGA_GAIN_60, 0); // R PGA is NOT muted
 
-    usleep(100); // wait for PLL is stabilized
-    
-    tlv320adc_reg_write(REG_MICBIAS, 2 << 5); // MICBIAS 2.5volts
-    tlv320adc_reg_write(REG_ADC_DIGITAL, 0xc0); // Lch ADC, Rch ADC is ON, // TODO: need both?
-    tlv320adc_reg_write(REG_ADC_VOLUME, 0); // Lch ADC, Rch ADC is NOT muted, both 0db, // TODO: need both?
-    
+    tlv320adc_reg_write(REG_ADC_DIGITAL, 0x40); // Lch ADC is OFF, Rch ADC is ON
+    tlv320adc_reg_write(REG_ADC_VOLUME, 0x80); // Lch ADC is mute, Rch ADC is NOT muted, both 0db
+    tlv320adc_reg_write(REG_ADC_VOLUME, 0x80);
     return aosr_on_reset; // should be 0x80 on reset
 }
 
