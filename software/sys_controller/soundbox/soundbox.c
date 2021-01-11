@@ -39,12 +39,14 @@ void soundbox_init()
         printf("pcm5122 init failure %d\n", ret);
         printf("pcm5122 power state = 0x%02x\n", pcm5122_get_powerstate());
     }
+    pcm5122_set_volume(255, 255); // 48 = 0dB, 255 = inf dB(mute)
+
     if (!mcu_init()) {
         printf("mcu init failure\n");
     }
 
-    pcm5122_set_volume(255, 255); // 48 = 0dB, 255 = inf dB(mute)
-    printf("audio adc init = 0x%02x\n", tlv320adc_init());
+    ret = tlv320adc_init();
+    printf("audio adc init = 0x%02x\n", ret);
     printf("sound box (dac, adc, mcu) initialized.\n");
 }
 
@@ -73,6 +75,10 @@ static void soundbox_loop_ping_tick()
     uint8_t vol_r = (volume) & 0x3f;
     uint8_t is_muted = (pioin & IS_MUTED_BIT) ? 1 : 0;
     printf("latest scancode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", scancode, vol_l, vol_r, is_muted);
+
+    uint8_t adc_status = tlv320adc_get_raw_status();
+    printf("adc raw status = 0x%02x\n", adc_status);
+    
 
     // printf("timestamp = %ld, freq= %d, sizeof timestamp = %d\n", alt_timestamp(), alt_timestamp_freq(), sizeof(alt_timestamp_type));
 }

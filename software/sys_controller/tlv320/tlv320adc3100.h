@@ -5,6 +5,6 @@
 
 
 uint8_t tlv320adc_init();
-
+uint8_t tlv320adc_get_raw_status();
 
 #endif // TLV320ADC_H
