@@ -79,8 +79,8 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_SW_RESET, 1); // software reset
     usleep(100); // wait for reset
     uint8_t aosr_on_reset = tlv320adc_reg_read(REG_ADC_AOSR);
-    // fs=8000 (Hz)
-    // MCLK=22579200 (Hz)
+    // fs=8,000 (Hz)
+    // MCLK=22,579,200 (Hz)
     // PLL CLK = 91,728,000
     // ADC CLK = 13,104,000
     // ADC MOD CLK= 936,000 (936khz) (need 64fs=512Khz)
@@ -95,6 +95,8 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_ADC_NADC, 0x80 | 7); // NADC = 7, NADC ON
     tlv320adc_reg_write(REG_ADC_MADC, 0x80 | 14); // MADC = 14, MADC ON
     tlv320adc_reg_write(REG_ADC_AOSR, 117); // AOSR = 117
+    // MADCxAOSR>=IADC
+    // 14*117=1638
     tlv320adc_reg_write(REG_ADC_INTERFACE_1, 0xc); // I2S 16bit, BLCK is out, WCLK is out
     tlv320adc_reg_write(REG_ADC_INTERFACE_2, 0x3); // BDIV_CLKIN = ADC_MOD_CLK
     tlv320adc_reg_write(REG_BCLK_N_DIV, 0x80 | 1); // BCLK OUT divider N = 1 and the divider is ON
