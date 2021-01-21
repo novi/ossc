@@ -238,19 +238,14 @@ set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME dummy -section_id soundbo
 set_global_assignment -name EDA_TEST_BENCH_NAME spi_slave -section_id eda_simulation
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id spi_slave
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME SPI_Slave_TB -section_id spi_slave
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/data_sync.v -section_id soundbox
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/util.v -section_id soundbox
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/spi_slave.v -section_id soundbox
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_receiver.v -section_id soundbox
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/SPI_Master.v -section_id spi_slave
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/spi_slave.v -section_id spi_slave
-set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/SPI_Slave_TB.sv -section_id spi_slave -hdl_version SystemVerilog_2005
 set_global_assignment -name VERILOG_FILE rtl/nextasic/spi_lib/spi_slave.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/spi_receiver.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/spi_op_dec.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/data_sync.v
 set_global_assignment -name VERILOG_FILE rtl/sb_top.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/util.v
+set_global_assignment -name VERILOG_FILE rtl/nextasic/mlaw/LIN2MLAW.v
+set_global_assignment -name VERILOG_FILE rtl/nextasic/microphone.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/sender.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/receiver.v
 set_global_assignment -name VERILOG_FILE rtl/nextasic/openc.v
@@ -275,4 +270,13 @@ set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 set_global_assignment -name QIP_FILE rtl/char_array.qip
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/microphone.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/data_sync.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/util.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/spi_slave.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_receiver.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/mlaw/LIN2MLAW.v -section_id soundbox
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/SPI_Master.v -section_id spi_slave
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/spi_slave.v -section_id spi_slave
+set_global_assignment -name EDA_TEST_BENCH_FILE rtl/nextasic/spi_lib/SPI_Slave_TB.sv -section_id spi_slave -hdl_version SystemVerilog_2005
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

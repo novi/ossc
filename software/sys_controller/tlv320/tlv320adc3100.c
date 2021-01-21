@@ -22,6 +22,7 @@ void tlv320_set_page(uint8_t page);
 #define REG_ADC_INTERFACE_2 29
 #define REG_BCLK_N_DIV 30
 #define REG_ADC_FLAG 36
+#define REG_I2S_TDM 38
 #define REG_ADC_DIGITAL 81
 #define REG_ADC_VOLUME 82
 #define REG_MICBIAS ((1 << 8) | 51) // page 1, reg 51
@@ -100,6 +101,7 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_ADC_INTERFACE_1, 0xc); // I2S 16bit, BLCK is out, WCLK is out
     tlv320adc_reg_write(REG_ADC_INTERFACE_2, 0x3); // BDIV_CLKIN = ADC_MOD_CLK
     tlv320adc_reg_write(REG_BCLK_N_DIV, 0x80 | 1); // BCLK OUT divider N = 1 and the divider is ON
+    tlv320adc_reg_write(REG_I2S_TDM, 1 << 4); // channel swap enabled
     
     tlv320adc_reg_write(REG_MICBIAS, 1 << 5); // MICBIAS 2.0volts
     tlv320adc_reg_write(REG_R_PGA_55, 0x3c); // differential pair only

@@ -195,6 +195,22 @@ module NextSoundBox (
         volume_db[5:0],
         volume_db_valid
     );
+
+    wire [31:0] mic_data_bus;
+    wire is_mic_data, mic_data_retrieved;
+    wire [1:0] mic_debug;
+    Microphone microphone(
+        mon_clk,
+        mic_start,
+        mic_stop,
+        mic_bclk,
+        mic_data,
+        mic_lrck,
+        mic_data_bus,
+        is_mic_data,
+        mic_data_retrieved & out_data_retrieved,
+        mic_debug
+    );
     
     wire [39:0] out_data;
     wire out_valid, power_on_packet_S1;
@@ -205,10 +221,8 @@ module NextSoundBox (
         0,
         power_on_packet_S1
     );
-    
-    wire [31:0] mic_data_bus;
-    wire is_mic_data, mic_data_retrieved;
-    assign is_mic_data = 0;
+
+
     OpEncoder op_enc(
         power_on_packet_S1,
         keyboard_data_ready_n,
@@ -223,7 +237,8 @@ module NextSoundBox (
     );
 
     // TODO: debug
-    assign spdif_led0 = out_data_retrieved;
+    // assign spdif_led0 = out_data_retrieved;
+    assign spdif_led0 = mic_debug[0];
     
     wire data_loss;
     Sender sender(
