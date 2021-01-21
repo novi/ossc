@@ -46,7 +46,9 @@ void soundbox_init()
     }
 
     ret = tlv320adc_init();
-    printf("audio adc init = 0x%02x\n", ret);
+    if (ret) {
+        printf("audio adc init = 0x%02x\n", ret);
+    }
     printf("sound box (dac, adc, mcu) initialized.\n");
 }
 
@@ -66,7 +68,8 @@ static void soundbox_loop_ping_tick()
     pcm5122_get_clock_error(),
     pcm5122_get_mute_state() );
 
-    pcm5122_set_volume(60, 60);
+    tlv320adc_set_mic_volume(16); // in db
+    pcm5122_set_volume(60, 60); // TODO: volume
 
     uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
     uint16_t scancode = pioin & SCANCODE_MASK; // 0xMMSS (M=modifier, S=scancode)
@@ -77,7 +80,8 @@ static void soundbox_loop_ping_tick()
     printf("latest scancode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", scancode, vol_l, vol_r, is_muted);
 
     uint8_t adc_status = tlv320adc_get_raw_status();
-    printf("adc raw status = 0x%02x\n", adc_status);
+    int8_t adc_gain = tlv320adc_get_mic_gain();
+    printf("adc raw status = 0x%02x, mic gain = %d\n", adc_status, adc_gain);
     
 
     // printf("timestamp = %ld, freq= %d, sizeof timestamp = %d\n", alt_timestamp(), alt_timestamp_freq(), sizeof(alt_timestamp_type));

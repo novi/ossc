@@ -25,8 +25,12 @@ void tlv320_set_page(uint8_t page);
 #define REG_I2S_TDM 38
 #define REG_ADC_DIGITAL 81
 #define REG_ADC_VOLUME 82
-#define REG_MICBIAS ((1 << 8) | 51) // page 1, reg 51
+#define REG_RIGHT_VOLUME 84
+#define REG_RIGHT_AGC_CTRL_1 94
+#define REG_RIGHT_AGC_MAX_GAIN 96
+#define REG_RIGHT_AGC_APPLIED_GAIN 101
 
+#define REG_MICBIAS ((1 << 8) | 51) // page 1, reg 51
 #define REG_R_PGA_55 ((1 << 8) | 55)
 #define REG_R_PGA_57 ((1 << 8) | 57)
 #define REG_R_PGA_GAIN_60 ((1 << 8) | 60)
@@ -104,14 +108,17 @@ uint8_t tlv320adc_init()
     tlv320adc_reg_write(REG_I2S_TDM, 1 << 4); // channel swap enabled
     
     tlv320adc_reg_write(REG_MICBIAS, 1 << 5); // MICBIAS 2.0volts
-    tlv320adc_reg_write(REG_R_PGA_55, 0x3c); // differential pair only
+    tlv320adc_reg_write(REG_R_PGA_55, 0x3c); // differential pair only (0db)
     tlv320adc_reg_write(REG_R_PGA_57, 0x3c); // not connect Lch input to Rch PGA
-    tlv320adc_reg_write(REG_R_PGA_GAIN_60, 0); // R PGA is NOT muted
+    tlv320adc_reg_write(REG_R_PGA_GAIN_60, 80); // R PGA is NOT muted, setting gain db(=value/2)
+
+    tlv320adc_reg_write(REG_RIGHT_AGC_CTRL_1, 1 << 7); // Rch AGC is ON
+    tlv320adc_reg_write(REG_RIGHT_AGC_MAX_GAIN, 80); // Max gain is 0db (=value/2)
 
     tlv320adc_reg_write(REG_ADC_DIGITAL, 0x40); // Lch ADC is OFF, Rch ADC is ON
     tlv320adc_reg_write(REG_ADC_VOLUME, 0x80); // Lch ADC is mute, Rch ADC is NOT muted, both 0db
     tlv320adc_reg_write(REG_ADC_VOLUME, 0x80);
-    return aosr_on_reset; // should be 0x80 on reset
+    return aosr_on_reset != 0x80; // should be 0x80 on reset
 }
 
 uint8_t tlv320adc_get_raw_status()
@@ -119,3 +126,12 @@ uint8_t tlv320adc_get_raw_status()
     return tlv320adc_reg_read(REG_ADC_FLAG);
 }
 
+int8_t tlv320adc_get_mic_gain()
+{
+    return (int8_t)tlv320adc_reg_read(REG_RIGHT_AGC_APPLIED_GAIN);
+}
+
+void tlv320adc_set_mic_volume(uint8_t db)
+{
+    tlv320adc_reg_write(REG_RIGHT_VOLUME, db*2); // Rch volume db(=value/2)
+}

@@ -22,9 +22,8 @@ module Microphone(
 	always@ (posedge clk) begin
 		if (record_stop)
 			record_active <= 0;
-		else if (record_start) begin
+		else if (record_start)
 			record_active <= 1;
-		end
 	end
 	
 	wire [7:0] ulawout;
@@ -38,7 +37,8 @@ module Microphone(
 	reg audio_data_retrieved = 0;
 
 	reg mic_data_filled = 0;
-	assign mic_data_valid = record_active & mic_data_filled;	
+	//reg wait_first = 0;
+	assign mic_data_valid = record_active & mic_data_filled; //(record_active | wait_first) & mic_data_filled; // record_active & mic_data_filled;
 	reg record_active_p = 0;
 	reg [1:0] send_counter = 0; // 0 to 3
 	assign mic_debug[1] = mic_data_valid;
@@ -47,8 +47,9 @@ module Microphone(
 		record_active_p <= record_active;
 		
 		if (!record_active_p && record_active) begin
-			mic_data <= 0;
-			mic_data_filled <= 0;
+			// start
+			mic_data <= 32'hffffffff; // silence sound
+			mic_data_filled <= 1;
 			send_counter <= 0;
 		end else if (mic_data_filled && mic_data_retrieved) begin
 			mic_data_filled <= 0;
@@ -113,7 +114,7 @@ module test_Microphone;
 	reg mic_data_retrieved = 0;
 	
 	
-	wire [1:0] mic_debug
+	wire [1:0] mic_debug;
 	
 	parameter MON_CLOCK = 200;
 	parameter AUDIO_CLOCK = MON_CLOCK*10; // BCLK
