@@ -7,7 +7,8 @@ module Sender(
 	input wire audio_sample_request_mode,
 	input wire audio_sample_request_tick,
 	output wire sout, // serial out
-	output reg data_loss = 0
+	output reg data_loss = 0,
+	output wire data_retrieved
 );
 
 	localparam READY = 1'b0; // define state
@@ -25,6 +26,16 @@ module Sender(
 	
 	wire packet_send_end;
 	assign packet_send_end = count == (41+3);
+	
+	reg data_retrieved_reg = 0;
+	assign data_retrieved = data_retrieved_reg | (in_data_valid & !has_buffer_data);
+
+	always@ (posedge clk) begin
+		if (in_data_valid & !has_buffer_data)
+			data_retrieved_reg <= 1;
+		else
+			data_retrieved_reg <= 0;
+	end
 
 	always@ (posedge clk) begin
 		case (state)
@@ -97,7 +108,7 @@ module test_Sender;
 	reg audio_sample_request_mode = 0;
 	wire sout;
 	wire data_loss;
-
+	wire data_retrieved;
 	
 	parameter CLOCK = 100;
 	parameter AUDIO_REQ_INTERVAL = 114;
@@ -109,7 +120,8 @@ module test_Sender;
 		audio_sample_request_mode,
 		audio_sample_request_tick,
 		sout,
-		data_loss
+		data_loss,
+		data_retrieved
 	);
 	
 	always #(CLOCK/2) clk = ~clk;

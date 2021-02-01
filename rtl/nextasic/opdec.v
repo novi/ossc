@@ -11,7 +11,9 @@ module OpDecoder(
 	output reg power_on_packet_R1,
 	output reg keyboard_led_update,
 	output reg attenuation_data_valid,
-	output reg [7:0] attenuation_data
+	output reg [7:0] attenuation_data,
+	output reg mic_start, // microphone record
+	output reg mic_stop
 );
 
 	wire [7:0] data1;
@@ -29,6 +31,8 @@ module OpDecoder(
 		end_audio_sample = 0;
 		attenuation_data_valid = 0;
 		attenuation_data = 8'hxx;
+		mic_start = 0;
+		mic_stop = 0;
 		if (op_valid)
 			casex (op)
 				24'hc5ef??: begin
@@ -57,6 +61,12 @@ module OpDecoder(
 				end
 				24'hc7????: begin
 					is_audio_sample = 1;
+				end
+				24'h0b????: begin
+					mic_start = 1;
+				end
+				24'h03????: begin
+					mic_stop = 1;
 				end
 				24'hff????: begin
 					all_1_packet = 1;

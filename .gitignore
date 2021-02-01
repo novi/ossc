@@ -21,3 +21,4 @@ PLLJ_PLLSPE_INFO.txt
 simulation/
 soundbox-stm32-chibios/build/
 soundbox-stm32-chibios/.dep
+*.v.bak
