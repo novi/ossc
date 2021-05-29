@@ -1015,6 +1015,7 @@ init_stat_begin:
     alt_timestamp_start();
 
     // target_input = AV3_RGBHV; // default input
+    // target_input = AV3_RGsB; // default input
 
     // Mainloop
     while(1) {
