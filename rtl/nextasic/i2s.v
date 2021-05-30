@@ -56,7 +56,8 @@ module I2SSender(
 	wire audio_22k_;
 	FF2SyncN audio_22k__(audio_22k, bck, audio_22k_);
 	
-	assign audio_req_underrun = underrun_count >= (audio_22k_ ? 3'd4: 3'd2) ? 1'b1 : 0;
+	// TODO: underrun_count clock domain
+	assign audio_req_underrun = audio_start & ( underrun_count >= (audio_22k_ ? 3'd4: 3'd2) ? 1'b1 : 0 );
 
 	assign lrck = state;
 	
@@ -249,10 +250,15 @@ module test_I2SSender;
 			@(negedge in_clk) in_valid = 0;
 		end
 		
-		
-		#(OUT_CLOCK*64*1);
+		// simulate underrun
+		@(posedge audio_req_mode_out & audio_req_tick);
+		#(OUT_CLOCK*200);
 		@(negedge in_clk) audio_end = 1;
 		@(negedge in_clk) audio_end = 0;
+		
+		// #(OUT_CLOCK*64*1);
+// 		@(negedge in_clk) audio_end = 1;
+// 		@(negedge in_clk) audio_end = 0;
 		
 		#(OUT_CLOCK*64*11);
 		

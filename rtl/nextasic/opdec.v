@@ -51,24 +51,6 @@ module OpDecoder(
 					attenuation_data_valid = 1;
 					attenuation_data = data1;
 				end
-				// 24'h1f????: begin // 22khz
-// 					audio_starts = 1;
-// 					audio_22khz = 1;
-// 				end
-// 				24'h0f????: begin // 44khz
-// 					audio_starts = 1;
-// 				end
-// 				24'h17????: begin // 22khz
-// 					end_audio_sample = 1;
-// 					audio_22khz = 1;
-// 				end
-// 				24'h07????: begin // 44khz
-// 					end_audio_sample = 1;
-// 				end
-
-				// 24'b00???111????????????????: begin
-// 					// audio control
-// 				end
 				24'hc7????: begin
 					is_audio_sample = 1;
 				end
