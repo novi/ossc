@@ -61,7 +61,7 @@ module Delay #(
 	reg [W-1:0] counter;
 	reg running = 0;
 	
-	always@ (negedge clk) begin
+	always@ (posedge clk) begin
 		if (counter == DELAY)
 			out_data <= 1;
 		else if (out_data) out_data <= 0;
@@ -87,6 +87,8 @@ module Delay #(
 	end
 endmodule
 
+
+// TODO: update edge
 module test_Delay;
 	reg clk = 0;
 	reg in_data = 0;

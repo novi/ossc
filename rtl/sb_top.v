@@ -177,7 +177,7 @@ module NextSoundBox (
         mon_clk,
         keyboard_data_n,
         keyboard_data_ready_n,
-        keyboard_data_retrieved & out_data_retrieved // out_data_retrieved
+        keyboard_data_retrieved & out_data_retrieved // for keyboard out_data_retrieved
     );
     
     DataSync #(.W(2)) keyboard_led_sync ( // FPGA clock domain to mon_clk domain
@@ -244,15 +244,16 @@ module NextSoundBox (
     // assign spdif_led0 = out_data_retrieved;
     // assign spdif_led0 = mic_debug[0];
     
-    // reg cur_audio_22khz_repeats = 0;
-    // assign spdif_led0 = cur_audio_22khz_repeats;
-    // always@ (posedge mon_clk) begin
-    //     if (data_recv && audio_starts)
-    //         cur_audio_22khz_repeats <= 1;
-    //     else if (data_recv && end_audio_sample)
-    //         cur_audio_22khz_repeats <= 0;
-    // end
-    assign spdif_led0 = audio_sample_request_mode;
+    reg cur_audio_22khz_repeats = 0;
+    assign spdif_led0 = cur_audio_22khz_repeats;
+    always@ (posedge mon_clk) begin
+        if (data_recv && mic_start)
+            cur_audio_22khz_repeats <= 1;
+        else if (data_recv && mic_stop)
+            cur_audio_22khz_repeats <= 0;
+    end
+    
+    // assign spdif_led0 = audio_sample_request_mode;
     
     wire data_loss;
     Sender sender(

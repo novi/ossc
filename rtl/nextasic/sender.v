@@ -31,14 +31,14 @@ module Sender(
 	reg data_retrieved_reg = 0;
 	assign data_retrieved = data_retrieved_reg | (in_data_valid & !has_buffer_data);
 
-	always@ (posedge clk) begin
+	always@ (negedge clk) begin // TODO: edge
 		if (in_data_valid & !has_buffer_data)
 			data_retrieved_reg <= 1;
 		else
 			data_retrieved_reg <= 0;
 	end
 
-	always@ (posedge clk) begin
+	always@ (negedge clk) begin
 		case (state)
 			READY: begin
 				if (audio_sample_request_tick) begin
@@ -132,32 +132,32 @@ module test_Sender;
 	
 	always #(CLOCK/2) clk = ~clk;
 	always #(CLOCK*AUDIO_REQ_INTERVAL) begin
-		@(negedge clk);
+		@(posedge clk);
 		audio_sample_request_tick = 1;
-		@(negedge clk);
+		@(posedge clk);
 		audio_sample_request_tick = 0;
 	end
 
 	task sendData;
 		begin
 			data = 40'b1101100110011001100110011001100110010001;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 1;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 0;
 			#(CLOCK*20);
 		
 			data = 40'b1101100110011001100110011001100110010011;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 1;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 0;
 			#(CLOCK*10);
 		
 			data = 40'b1101100110011001100110011001100110010111;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 1;
-			@(negedge clk);
+			@(posedge clk);
 			data_valid = 0;
 		end
 	endtask

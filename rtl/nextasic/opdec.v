@@ -55,9 +55,11 @@ module OpDecoder(
 					is_audio_sample = 1;
 				end
 				24'h0b????: begin
+				//24'b00??1011????????????????: begin
 					mic_start = 1;
 				end
 				24'h03????: begin
+				//24'b00??0011????????????????: begin
 					mic_stop = 1;
 				end
 				24'hff????: begin
@@ -74,6 +76,8 @@ module OpDecoder(
 				8'b00??1111: begin
 					audio_starts = 1;
 				end
+				default: begin
+				end
 			endcase
 			casex (op[23:16])
 				8'b00?1?111: begin
@@ -83,6 +87,8 @@ module OpDecoder(
 				8'b00?0?111: begin
 					debug_audio_control_changed = 1;
 				end
+				default: begin
+				end
 			endcase
 			casex (op[23:16])
 				8'b000??111: begin
@@ -90,6 +96,8 @@ module OpDecoder(
 				end
 				8'b001??111: begin
 					audio_22khz_repeats = 0; // zero fill
+				end
+				default: begin
 				end
 			endcase
 		end

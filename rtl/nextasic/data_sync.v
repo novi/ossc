@@ -17,7 +17,7 @@ module DataSync #(
 	reg [W-1:0] tmp;
 	reg has_data = 0;
 	wire has_data_;
-	FF2SyncP has_data__(has_data, out_clk, has_data_);
+	FF2SyncN has_data__(has_data, out_clk, has_data_);
 	reg data_retrived = 0;
 	wire data_retrived_;
 	FF2SyncN data_retrived__(data_retrived, in_clk, data_retrived_);
@@ -31,7 +31,7 @@ module DataSync #(
 		end
 	end
 	
-	always@ (negedge out_clk) begin
+	always@ (posedge out_clk) begin
 		if (has_data_ && !out_data_valid && !data_retrived) begin
 			out_data <= tmp;
 			out_data_valid <= 1;
@@ -46,6 +46,7 @@ module DataSync #(
 endmodule
 
 
+// TODO: update edge
 module test_DataSync_Fast_Slow;
 
 	reg in_clk = 0;
@@ -107,6 +108,7 @@ module test_DataSync_Fast_Slow;
 	
 endmodule
 
+// TODO: update edge
 module test_DataSync_Slow_Fast;
 
 	reg in_clk = 0;
