@@ -52,15 +52,17 @@ module NextSoundBox (
         audio_bclk
     );
     
-    wire is_audio_sample, audio_starts, audio_22khz, end_audio_sample, all_1_packet, power_on_packet_R1, keyboard_led_update,
+    wire is_audio_sample, audio_starts, audio_22khz, audio_22khz_repeats, end_audio_sample, all_1_packet, power_on_packet_R1, keyboard_led_update,
          attenuation_data_valid, mic_start, mic_stop;
     wire [7:0] attenuation_data;
+    wire debug_audio_control_changed;
     OpDecoder op_decoder(
         in_data[39:16],
         data_recv,
         is_audio_sample,
         audio_starts,
         audio_22khz,
+        audio_22khz_repeats,
         end_audio_sample,
         all_1_packet,
         power_on_packet_R1,
@@ -68,7 +70,8 @@ module NextSoundBox (
         attenuation_data_valid,
         attenuation_data,
         mic_start,
-        mic_stop
+        mic_stop,
+        debug_audio_control_changed
     );
     
     wire audio_sample_request_mode, audio_sample_request_tick;
@@ -238,7 +241,17 @@ module NextSoundBox (
 
     // TODO: debug
     // assign spdif_led0 = out_data_retrieved;
-    assign spdif_led0 = mic_debug[0];
+    // assign spdif_led0 = mic_debug[0];
+    
+    reg cur_audio_22khz_repeats = 0;
+    assign spdif_led0 = cur_audio_22khz_repeats;
+    always@ (posedge mon_clk) begin
+        if (data_recv && audio_starts)
+            cur_audio_22khz_repeats <= 1;
+        else if (data_recv && end_audio_sample)
+            cur_audio_22khz_repeats <= 0;
+    end
+    // assign spdif_led0 = audio_sample_request_mode;
     
     wire data_loss;
     Sender sender(

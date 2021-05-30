@@ -32,8 +32,9 @@ module I2SSender(
 	reg [31:0] data2;
 	reg [5:0] counter = 0; // 0 to 63
 	reg [1:0] send_count = 0;
-	reg [4:0] req_delay = 0;
+	reg [5:0] req_delay = 0;
 	
+	reg audio_req_interval = 0; // for 22khz	
 	reg audio_req = 0; // bck domain
 	wire audio_req_;
 	FF2SyncN audio_req__(audio_req, in_clk, audio_req_);
@@ -60,15 +61,20 @@ module I2SSender(
 		if (audio_req_ack_)
 			audio_req <= 0;
 		
-		
-		if (req_delay == 5'd22) begin // TODO: timing
+		if (req_delay == 6'd22) begin // TODO: timing
 			req_delay <= 0;
-			audio_req <= 1;
+			if (audio_req_interval && audio_22k_)
+				audio_req_interval <= 0;
+			else begin
+				audio_req_interval <= 1;
+				audio_req <= 1;
+			end
 			audio_on_req_mode <= on_req_mode;
 		end else begin
 			req_delay <= req_delay + 1'b1;
+			if (!audio_start_)
+				audio_req_interval <= 0;
 		end
-
 		
 		// audio data
 		if (counter == 31) begin
@@ -139,14 +145,13 @@ module I2SSender(
 	
 	always@ (posedge in_clk) begin
 		// request
-		if (audio_start_in) begin
-			audio_start <= 1;
-			audio_22k <= audio_22kz_in;
-		end else if (audio_end_in) begin
+		if (audio_end_in) begin
 			audio_start <= 0;
 			audio_22k <= audio_22kz_in;
+		end else if (audio_start_in) begin
+			audio_start <= 1;
+			audio_22k <= audio_22kz_in;
 		end
-		
 		
 		// audio data
 		if (data1_retrieved_)
@@ -173,13 +178,14 @@ module test_I2SSender;
 	reg [31:0] data;
 	reg in_valid = 0;
 	reg audio_start = 0;
+	reg audio_end = 0;
 	wire lrck;
 	wire sout;
 	wire audio_req_tick;
 	wire audio_req_mode_out;
 
 	
-	parameter OUT_CLOCK = (100*4);
+	parameter OUT_CLOCK = (355); // 2.82mhz
 	parameter IN_CLOCK = 200;
 
 	I2SSender sender(
@@ -187,6 +193,7 @@ module test_I2SSender;
 		in_valid,
 		data,
 		audio_start,
+		audio_end,
 		0,
 		audio_req_mode_out,
 		audio_req_tick,
@@ -208,11 +215,9 @@ module test_I2SSender;
 		audio_start = 1;
 		@(negedge in_clk);
 		audio_start = 0;
-		#(OUT_CLOCK*6);
 		
-		@(negedge in_clk) in_valid = 1;
-		@(negedge in_clk) in_valid = 0;
-		#(OUT_CLOCK*32+5)
+		@(posedge audio_req_mode_out & audio_req_tick);
+		#(OUT_CLOCK*20);
 		data = 32'b10011001100110011001100110010011;
 		@(negedge in_clk) in_valid = 1;
 		@(negedge in_clk) in_valid = 0;
@@ -240,7 +245,7 @@ module test_I2SSender_22khz;
 	wire audio_req_mode_out;
 
 	
-	parameter OUT_CLOCK = (100*4);
+	parameter OUT_CLOCK = (355); // 2.82mhz
 	parameter IN_CLOCK = 200;
 
 	I2SSender sender(
@@ -276,10 +281,10 @@ module test_I2SSender_22khz;
 		@(negedge in_clk) in_valid = 0;
 		
 		@(posedge audio_req_mode_out & audio_req_tick);
-		#(OUT_CLOCK*20);
+		#(OUT_CLOCK*200);
 		data = 32'b10011001100110011001100110010011;
-		@(negedge in_clk) in_valid = 1;
-		@(negedge in_clk) in_valid = 0;
+		// @(negedge in_clk) in_valid = 1;
+		// @(negedge in_clk) in_valid = 0;
 		
 		@(posedge audio_req_mode_out & audio_req_tick);
 		#(OUT_CLOCK*20);
