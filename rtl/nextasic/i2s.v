@@ -8,6 +8,7 @@ module I2SSender(
 	input wire audio_end_in,
 	input wire audio_22kz_in, // 1 is 22khz, 0 is 44khz
 	output reg audio_req_mode_out = 0, // request next sound samples to NeXT hardware
+	output wire audio_req_underrun,
 	output reg audio_req_tick = 0,
 	//input wire i2s_clk, // 22.5792Mhz(or 11.2896Mhz)
 	input wire bck, // 2.8224Mhz, 64fs
@@ -33,6 +34,7 @@ module I2SSender(
 	reg [5:0] counter = 0; // 0 to 63
 	reg [1:0] send_count = 0;
 	reg [5:0] req_delay = 0;
+	reg [2:0] underrun_count = 0;
 	
 	reg audio_req_interval = 0; // for 22khz	
 	reg audio_req = 0; // bck domain
@@ -53,7 +55,9 @@ module I2SSender(
 	reg audio_22k = 0; // in_clk domain
 	wire audio_22k_;
 	FF2SyncN audio_22k__(audio_22k, bck, audio_22k_);
-		
+	
+	assign audio_req_underrun = underrun_count >= (audio_22k_ ? 3'd4: 3'd2) ? 1'b1 : 0;
+
 	assign lrck = state;
 	
 	always@ (negedge bck) begin
@@ -61,7 +65,7 @@ module I2SSender(
 		if (audio_req_ack_)
 			audio_req <= 0;
 		
-		if (req_delay == 6'd22) begin // TODO: timing
+		if (req_delay == 6'd22) begin // TODO: timing, 5us?
 			req_delay <= 0;
 			if (audio_req_interval && audio_22k_)
 				audio_req_interval <= 0;
@@ -78,6 +82,11 @@ module I2SSender(
 		
 		// audio data
 		if (counter == 31) begin
+			if (data2_valid || data1_filled_ || !audio_start_)
+				underrun_count <= 0;
+			else if (underrun_count < 3'd7 && audio_start_ && on_req_mode)
+				underrun_count <= underrun_count + 1'b1;
+			
 			case (state)
 				IN_SAMPLES_R: begin
 					state <= IN_SAMPLES_L;
@@ -94,7 +103,6 @@ module I2SSender(
 							on_req_mode <= 0;
 					end else
 						on_req_mode <= audio_start_;
-						
 				end
 			endcase
 			counter <= 0;
@@ -183,6 +191,7 @@ module test_I2SSender;
 	wire sout;
 	wire audio_req_tick;
 	wire audio_req_mode_out;
+	wire audio_req_underrun;
 
 	
 	parameter OUT_CLOCK = (355); // 2.82mhz
@@ -196,11 +205,14 @@ module test_I2SSender;
 		audio_end,
 		0,
 		audio_req_mode_out,
+		audio_req_underrun,
 		audio_req_tick,
 		out_clk, // bck
 		lrck,
 		sout
 	);
+	
+	integer i;
 	
 	always #(IN_CLOCK/2) in_clk = ~in_clk;
 	always #(OUT_CLOCK/2) out_clk = ~out_clk;
@@ -222,9 +234,28 @@ module test_I2SSender;
 		@(negedge in_clk) in_valid = 1;
 		@(negedge in_clk) in_valid = 0;
 		
-		#(OUT_CLOCK*64*10);
+		// simulate underrun
+		@(posedge audio_req_mode_out & audio_req_tick);
+		#(OUT_CLOCK*300);
+		data = 32'b10011001100110011001100110010011;
+		// @(negedge in_clk) in_valid = 1;
+		// @(negedge in_clk) in_valid = 0;
 		
-		#(OUT_CLOCK*64*10);
+		for (i = 0; i < 5; i ++) begin
+			@(posedge audio_req_mode_out & audio_req_tick);
+			#(OUT_CLOCK*20);
+			data = 32'b10011001100110011001100110000011;
+			@(negedge in_clk) in_valid = 1;
+			@(negedge in_clk) in_valid = 0;
+		end
+		
+		
+		#(OUT_CLOCK*64*1);
+		@(negedge in_clk) audio_end = 1;
+		@(negedge in_clk) audio_end = 0;
+		
+		#(OUT_CLOCK*64*11);
+		
 		
 		$stop;
 	end
@@ -243,6 +274,7 @@ module test_I2SSender_22khz;
 	wire sout;
 	wire audio_req_tick;
 	wire audio_req_mode_out;
+	wire audio_req_underrun;
 
 	
 	parameter OUT_CLOCK = (355); // 2.82mhz
@@ -256,11 +288,14 @@ module test_I2SSender_22khz;
 		audio_end,
 		1, // 22khz
 		audio_req_mode_out,
+		audio_req_underrun,
 		audio_req_tick,
 		out_clk, // bck
 		lrck,
 		sout
 	);
+	
+	integer i;
 	
 	always #(IN_CLOCK/2) in_clk = ~in_clk;
 	always #(OUT_CLOCK/2) out_clk = ~out_clk;
@@ -280,17 +315,21 @@ module test_I2SSender_22khz;
 		@(negedge in_clk) in_valid = 1;
 		@(negedge in_clk) in_valid = 0;
 		
+		// simulate underrun
 		@(posedge audio_req_mode_out & audio_req_tick);
-		#(OUT_CLOCK*200);
+		#(OUT_CLOCK*300);
 		data = 32'b10011001100110011001100110010011;
 		// @(negedge in_clk) in_valid = 1;
 		// @(negedge in_clk) in_valid = 0;
 		
-		@(posedge audio_req_mode_out & audio_req_tick);
-		#(OUT_CLOCK*20);
-		data = 32'b10011001100110011001100110000011;
-		@(negedge in_clk) in_valid = 1;
-		@(negedge in_clk) in_valid = 0;
+		for (i = 0; i < 5; i ++) begin
+			@(posedge audio_req_mode_out & audio_req_tick);
+			#(OUT_CLOCK*20);
+			data = 32'b10011001100110011001100110000011;
+			@(negedge in_clk) in_valid = 1;
+			@(negedge in_clk) in_valid = 0;
+		end
+		
 		
 		#(OUT_CLOCK*64*1);
 		@(negedge in_clk) audio_end = 1;

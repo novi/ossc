@@ -74,7 +74,7 @@ module NextSoundBox (
         debug_audio_control_changed
     );
     
-    wire audio_sample_request_mode, audio_sample_request_tick;
+    wire audio_sample_request_mode, audio_sample_request_underrun, audio_sample_request_tick;
     I2SSender i2s(
         mon_clk,
         is_audio_sample,
@@ -83,6 +83,7 @@ module NextSoundBox (
         end_audio_sample,
         audio_22khz,
         audio_sample_request_mode,
+        audio_sample_request_underrun,
         audio_sample_request_tick,
         audio_bclk,
         audio_lrck,
@@ -243,15 +244,15 @@ module NextSoundBox (
     // assign spdif_led0 = out_data_retrieved;
     // assign spdif_led0 = mic_debug[0];
     
-    reg cur_audio_22khz_repeats = 0;
-    assign spdif_led0 = cur_audio_22khz_repeats;
-    always@ (posedge mon_clk) begin
-        if (data_recv && audio_starts)
-            cur_audio_22khz_repeats <= 1;
-        else if (data_recv && end_audio_sample)
-            cur_audio_22khz_repeats <= 0;
-    end
-    // assign spdif_led0 = audio_sample_request_mode;
+    // reg cur_audio_22khz_repeats = 0;
+    // assign spdif_led0 = cur_audio_22khz_repeats;
+    // always@ (posedge mon_clk) begin
+    //     if (data_recv && audio_starts)
+    //         cur_audio_22khz_repeats <= 1;
+    //     else if (data_recv && end_audio_sample)
+    //         cur_audio_22khz_repeats <= 0;
+    // end
+    assign spdif_led0 = audio_sample_request_mode;
     
     wire data_loss;
     Sender sender(
@@ -259,6 +260,7 @@ module NextSoundBox (
         out_data,
         out_valid,
         audio_sample_request_mode,
+        audio_sample_request_underrun,
         audio_sample_request_tick,
         from_mon,
         data_loss,
