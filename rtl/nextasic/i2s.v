@@ -36,7 +36,8 @@ module I2SSender(
 	reg [5:0] req_delay = 0;
 	reg [2:0] underrun_count = 0;
 	
-	reg audio_req_interval = 0; // for 22khz	
+	reg audio_req_interval = 0; // for 22khz, // TODO: remove
+	
 	reg audio_req = 0; // bck domain
 	wire audio_req_;
 	FF2SyncN audio_req__(audio_req, in_clk, audio_req_);
@@ -60,7 +61,7 @@ module I2SSender(
 	assign audio_req_underrun = underrun_count >= (audio_22k_ ? 3'd5: 3'd3) ? 1'b1 : 0; // bck domain
 	wire audio_req_underrun_;
 	FF2SyncN audio_req_underrun__(audio_req_underrun, in_clk, audio_req_underrun_);
-	assign audio_req_underrun_out = 0; //audio_start & audio_req_underrun_;
+	assign audio_req_underrun_out = audio_start & audio_req_underrun_;
 
 	assign lrck = state;
 	
@@ -68,21 +69,21 @@ module I2SSender(
 		// request
 		if (audio_req_ack_)
 			audio_req <= 0;
-		
+			
 		if (req_delay == 6'd22) begin // TODO: timing, 5us?
 			req_delay <= 0;
-			// audio_req <= 1;
+			audio_req <= 1;
 			if (audio_req_interval && audio_22k_)
 				audio_req_interval <= 0;
 			else begin
 				audio_req_interval <= 1;
-				audio_req <= 1;
+				// audio_req <= 1;
 			end
 			audio_on_req_mode <= on_req_mode;
 		end else begin
 			req_delay <= req_delay + 1'b1;
 			if (!audio_start_)
-				audio_req_interval <= 0;
+				audio_req_interval <= 0; 
 		end
 		
 		// audio data
