@@ -17,7 +17,7 @@ module Microphone(
 
 	reg record_active = 0;
 	reg record_active_delay_start = 0;
-	reg [8:0] record_active_delay = 0;
+	reg [4:0] record_active_delay = 0;
 	
 	assign mic_debug[0] = record_active;
 
@@ -25,12 +25,13 @@ module Microphone(
 		if (record_stop) begin
 			record_active <= 0;
 			record_active_delay_start <= 0;
+			// TODO: send last available mic data
 		end else begin
 			if (record_start) begin
 				record_active_delay_start <= 1;
 				record_active_delay <= 0;
 			end else if (record_active_delay_start) begin
-				if (record_active_delay == 9'd100) begin // delay to first soundin(mic data) packet
+				if (record_active_delay == 5'd100) begin // delay to first soundin(mic data) packet
 					record_active <= 1;
 					record_active_delay_start <= 0;
 				end else
