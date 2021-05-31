@@ -71,7 +71,7 @@ module I2SSender(
 		if (audio_req_ack_)
 			audio_req <= 0;
 			
-		if (req_delay == 6'd22) begin // TODO: timing, 5us?
+		if (req_delay == (audio_22k_ ? 6'd21 : 6'd22)) begin // TODO: timing, 5us?
 			req_delay <= 0;
 			// audio_req <= 1;
 			if (audio_req_interval && audio_22k_)

@@ -31,7 +31,7 @@ module Microphone(
 				record_active_delay_start <= 1;
 				record_active_delay <= 0;
 			end else if (record_active_delay_start) begin
-				if (record_active_delay == 5'd100) begin // delay to first soundin(mic data) packet
+				if (record_active_delay == 5'd10) begin // delay to first soundin(mic data) packet
 					record_active <= 1;
 					record_active_delay_start <= 0;
 				end else
