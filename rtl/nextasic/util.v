@@ -66,6 +66,8 @@ module Delay #(
 			out_data <= 1;
 		else if (out_data) out_data <= 0;
 	end
+	// TODO: 
+	// counter == (DELAY+1)
 	
 	always@ (posedge clk) begin
 		if (reset) 

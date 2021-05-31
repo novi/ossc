@@ -222,7 +222,7 @@ module NextSoundBox (
     Delay #(.DELAY(14000), .W(14)) power_on_packet_delay( // 2.8ms delay
         mon_clk,
         power_on_packet_R1,
-        0,
+        0, // TODO: all_1_packet
         power_on_packet_S1
     );
 
@@ -247,11 +247,12 @@ module NextSoundBox (
     reg cur_audio_22khz_repeats = 0;
     assign spdif_led0 = cur_audio_22khz_repeats;
     always@ (posedge mon_clk) begin
-        if (data_recv && mic_start)
-            cur_audio_22khz_repeats <= 1;
-        else if (data_recv && mic_stop)
+        if (data_recv && power_on_packet_R1)
             cur_audio_22khz_repeats <= 0;
+		else if (data_recv && all_1_packet)
+			cur_audio_22khz_repeats <= 1;
     end
+	// assign spdif_led0 = all_1_packet;
     
     // assign spdif_led0 = audio_sample_request_mode;
     
