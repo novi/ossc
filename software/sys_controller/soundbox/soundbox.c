@@ -8,8 +8,10 @@
 #include <unistd.h>
 #include "sys/alt_timestamp.h"
 #include "control_sb.h"
+#include "avconfig.h"
 
 extern alt_u16 sys_ctrl;
+extern avconfig_t tc;
 
 // sys_ctrl bits for SoundBox
 #define CONTROL_LED_FROM_SOFTWARE_BIT   (1<<4)
@@ -26,11 +28,11 @@ extern alt_u16 sys_ctrl;
 #define TIMESTAMP_FREQ (27) // 27Mhz (FPGA clock)
 #define TIMESTAMP_UNIT_MS (1000000)
 
-static uint8_t nextvol_to_pcmvol(uint8_t nextvol)
-{
-    uint16_t v = ((nextvol*(255-48))/43)+48;
-    return v;
-}
+// static uint8_t nextvol_to_pcmvol(uint8_t nextvol)
+// {
+//     uint16_t v = ((nextvol*(255-48))/43)+48;
+//     return v;
+// }
 
 void soundbox_init()
 {
@@ -68,16 +70,34 @@ static void soundbox_loop_ping_tick()
     pcm5122_get_clock_error(),
     pcm5122_get_mute_state() );
 
+    // TODO: menu
     tlv320adc_set_mic_volume(16); // in db
-    pcm5122_set_volume(60, 60); // TODO: volume
 
     uint32_t pioin = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
     uint16_t scancode = pioin & SCANCODE_MASK; // 0xMMSS (M=modifier, S=scancode)
     uint16_t volume = pioin >> VOLUME_MASK_SHIFT;
     uint8_t vol_l = (volume >> 6) & 0x3f; // 0(=0 db) to 43(=inf db), 0xfff=invalid(or not available)
     uint8_t vol_r = (volume) & 0x3f;
+    if (vol_l == 0xfff)
+        vol_l = SB_VOLUME_DB_AMOUNT;
+    if (vol_r == 0xfff)
+        vol_r = SB_VOLUME_DB_AMOUNT;
+    // convert next volume db to ossc volume db[ 0(inf db) to 43(0 db) ] 
+    vol_l = SB_VOLUME_DB_AMOUNT - vol_l;
+    vol_r = SB_VOLUME_DB_AMOUNT - vol_r;
     uint8_t is_muted = (pioin & IS_MUTED_BIT) ? 1 : 0;
     printf("latest scancode = 0x%04x, volume L=%d, R=%d, muted?=%d\n", scancode, vol_l, vol_r, is_muted);
+    uint8_t active_vol_l = tc.soundbox_volume_max > vol_l ? vol_l : tc.soundbox_volume_max; // pick min value
+    uint8_t active_vol_r = tc.soundbox_volume_max > vol_r ? vol_r : tc.soundbox_volume_max; // pick min value
+    printf("active vol L=%d, R=%d (max %d)\n", active_vol_l, active_vol_r, tc.soundbox_volume_max);
+
+    // convert to PCM5122 volume, 48 = 0dB, 255 = inf dB(mute)
+    // 0 to 43 -> 0 to 207
+    active_vol_l = (((SB_VOLUME_DB_AMOUNT - active_vol_l) * 207 ) / 43 ) + 48;
+    active_vol_r = (((SB_VOLUME_DB_AMOUNT - active_vol_r) * 207 ) / 43 ) + 48;
+    printf("pcm5122 vol L=%d, R=%d\n", active_vol_l, active_vol_r);
+    pcm5122_set_volume(is_muted ? 255 : (active_vol_l),
+                        is_muted ? 255 : (active_vol_r) ); 
 
     uint8_t adc_status = tlv320adc_get_raw_status();
     int8_t adc_gain = tlv320adc_get_mic_gain();

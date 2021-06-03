@@ -33,7 +33,8 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
         #endif
         KeyboardHandleMouseInfo(report);
     } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
-        _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
+        if (report[0] || report[2] || report[3] || report[4] || report[5] || report[6] || report[7]) {
+            _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
                 report[2],
                 report[3],
@@ -42,6 +43,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 report[6],
                 report[7],
                 hidp->dev);
+        }
         KeyboardHandleKeyboardInfo(report);
     } else {
         _usbh_dbgf(hidp->dev->host, "Generic report, %d bytes", len);
@@ -132,7 +134,10 @@ static THD_FUNCTION(Thread1, arg) {
   while (true) {
     palClearPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
-    palSetPad(GPIOB, GPIOB_STATUS_LED);
+    // show blink if no usb device
+    // TODO:
+    // palSetPad(GPIOB, GPIOB_STATUS_LED);
+
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     LOG_MAIN("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );

@@ -65,6 +65,8 @@ const avconfig_t tc_default = {
     .clamp_offset = SIGNED_NUMVAL_ZERO,
     .alc_h_filter = DEFAULT_ALC_H_FILTER,
     .alc_v_filter = DEFAULT_ALC_V_FILTER,
+    .soundbox_volume_max = SB_VOLUME_DB_AMOUNT/2,
+    
 };
 
 int set_default_avconfig()
