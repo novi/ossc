@@ -16,14 +16,28 @@ module Microphone(
 );
 
 	reg record_active = 0;
+	reg record_active_delay_start = 0;
+	reg [4:0] record_active_delay = 0;
 	
 	assign mic_debug[0] = record_active;
 
 	always@ (posedge clk) begin
-		if (record_stop)
+		if (record_stop) begin
 			record_active <= 0;
-		else if (record_start)
-			record_active <= 1;
+			record_active_delay_start <= 0;
+			// TODO: send last available mic data
+		end else begin
+			if (record_start) begin
+				record_active_delay_start <= 1;
+				record_active_delay <= 0;
+			end else if (record_active_delay_start) begin
+				if (record_active_delay == 5'd10) begin // delay to first soundin(mic data) packet
+					record_active <= 1;
+					record_active_delay_start <= 0;
+				end else
+					record_active_delay <= record_active_delay + 1'b1;
+			end
+		end
 	end
 	
 	wire [7:0] ulawout;
@@ -43,11 +57,12 @@ module Microphone(
 	reg [1:0] send_counter = 0; // 0 to 3
 	assign mic_debug[1] = mic_data_valid;
 	
-	always@ (negedge clk) begin
+	always@ (posedge clk) begin
 		record_active_p <= record_active;
 		
 		if (!record_active_p && record_active) begin
 			// start
+			// TODO: no need this, no need delay to first packet
 			mic_data <= 32'hffffffff; // silence sound
 			mic_data_filled <= 1;
 			send_counter <= 0;
@@ -100,6 +115,7 @@ endmodule
 
 `timescale 1ns/1ns
 
+// TODO: update edge
 module test_Microphone;
 	reg mon_clk = 0;
 	reg record_start = 0;
@@ -165,11 +181,13 @@ module test_Microphone;
 	endtask
 	
 	initial begin
-		@(posedge mic_data_valid);
-		@(posedge mon_clk);
-		@(posedge mon_clk);
-		@(posedge mon_clk) mic_data_retrieved = 1;
-		@(posedge mon_clk) mic_data_retrieved = 0;
+		forever begin
+			@(posedge mic_data_valid);
+			@(posedge mon_clk);
+			@(posedge mon_clk);
+			@(posedge mon_clk) mic_data_retrieved = 1;
+			@(posedge mon_clk) mic_data_retrieved = 0;
+		end
 	end
 	
 	initial begin	
@@ -185,7 +203,7 @@ module test_Microphone;
 		I2SSend(16'h9696, 16'h9696);
 		I2SSend(16'haaaa, 16'haaaa);
 
-		#(AUDIO_CLOCK*100);
+		#(AUDIO_CLOCK*1000);
 		$stop;
 	end
 	

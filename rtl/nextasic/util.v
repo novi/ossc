@@ -56,21 +56,18 @@ module Delay #(
 	input wire clk,
 	input wire in_data,
 	input wire reset,
-	output reg out_data = 0
+	output wire out_data
 );
 	reg [W-1:0] counter;
 	reg running = 0;
 	
-	always@ (negedge clk) begin
-		if (counter == DELAY)
-			out_data <= 1;
-		else if (out_data) out_data <= 0;
-	end
+	assign out_data = running & (counter == (DELAY+1));
 	
 	always@ (posedge clk) begin
-		if (reset) 
+		if (reset) begin
 			running <= 0;
-		else begin
+			counter <= 0;
+		end else begin
 			if (running) begin
 				if (counter == (DELAY+1)) begin
 					running <= 0;

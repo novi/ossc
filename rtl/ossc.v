@@ -85,7 +85,9 @@ wire ir_rx;
 assign ir_rx = 0;
 wire [1:0] btn;
 assign btn = 2'b11;
-reg is_mono = 1;
+// Mono or Color mode
+// TODO: change from menu
+reg is_mono = 0;
 
 wire lcd_bl_on, spdif_led0;
 assign lcd_bl_on = 0;

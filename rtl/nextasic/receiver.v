@@ -12,6 +12,7 @@ module Receiver(
 
 	reg state = READY;
 	reg [5:0] count = 0; // range 0 to 40
+	reg is_all_1 = 0;
 	
 	always@ (negedge clk) begin
 		if (count == 40)
@@ -20,24 +21,42 @@ module Receiver(
 			data_recv_valid <= 0;
 	end
 	
+	reg reset_req = 0; // TODO: use this reset line for global reset
+	
 	always@ (posedge clk) begin
-		case (state)
-			READY : if (si == 1) state <= READ; // start bit
-			READ :
-				case (count)
-					41: begin
-						state <= READY;
-						count <= 0;
-					end
-					40: begin
-						count <= count + 1'b1;
-					end
-					default: begin
-						data[39:0] <= {data[38:0], si};
-						count <= count + 1'b1;
-					end
-				endcase
-		endcase
+		if (reset_req) begin
+			state <= READY;
+			count <= 0;
+			if (!si)
+				reset_req <= 0;
+		end else
+			case (state)
+				READY : if (si == 1) begin
+					state <= READ; // start bit
+				end
+				READ :
+					case (count)
+						41: begin
+							state <= READY;
+							count <= 0;
+							if (!si)
+								is_all_1 <= 0;
+							else if (is_all_1)
+								reset_req <= 1;
+						end
+						40: begin
+							count <= count + 1'b1;
+						end
+						default: begin
+							if (si && count == 0)
+								is_all_1 <= 1;
+							else if (!si)
+								is_all_1 <= 0;
+							data[39:0] <= {data[38:0], si};
+							count <= count + 1'b1;
+						end
+					endcase
+			endcase
 	end
 
 
@@ -65,7 +84,13 @@ module test_Receiver;
 	initial begin
 		#(CLOCK/4) sin = 0; // initial 
 		
-		#CLOCK sin = 1; // first, will be dropped
+		sin = 1; // simulate reset(all 1 packet)
+		#(CLOCK*44);
+		
+		sin = 0;
+		#(CLOCK*30);
+		
+		#CLOCK sin = 1; // start bit, first, will be dropped
 		
 		#CLOCK sin = 1; // MSB
 		#CLOCK sin = 0;
@@ -129,7 +154,7 @@ module test_Receiver;
 		#CLOCK sin = 1;
 		#CLOCK sin = 0;
 		#CLOCK sin = 1;
-		#CLOCK sin = 0;
+		#CLOCK sin = 1;
 		
 		#CLOCK sin = 1; 
 		#CLOCK sin = 0;
