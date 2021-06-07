@@ -66,7 +66,7 @@ const avconfig_t tc_default = {
     .alc_h_filter = DEFAULT_ALC_H_FILTER,
     .alc_v_filter = DEFAULT_ALC_V_FILTER,
     .soundbox_volume_max = SB_VOLUME_DB_AMOUNT/2,
-    
+    .soundbox_mic_gain = 0
 };
 
 int set_default_avconfig()

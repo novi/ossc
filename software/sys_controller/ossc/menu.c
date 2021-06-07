@@ -102,6 +102,7 @@ static void alc_h_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LN
 //static void coarse_gain_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%u", ((v*10)+50)/100, (((v*10)+50)%100)/10); }
 // for Sound Box
 static void sb_maxvol_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v-SB_VOLUME_DB_AMOUNT)); }
+static void sb_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v)); }
 
 static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
 static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, profile_disp};
@@ -247,6 +248,7 @@ MENU(menu_settings, P99_PROTECT({ \
 // for Sound Box
 MENU(menu_soundbox, P99_PROTECT({ \
     { "Max Volume", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_volume_max,     OPT_NOWRAP, 0, SB_VOLUME_DB_AMOUNT, sb_maxvol_db_disp } } },
+    { "Mic Gain", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mic_gain,     OPT_NOWRAP, 0, SB_MIC_GAIN_MAX, sb_db_disp } } },
 }))
 
 
