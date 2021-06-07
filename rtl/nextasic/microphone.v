@@ -17,7 +17,7 @@ module Microphone(
 
 	reg record_active = 0;
 	reg record_active_delay_start = 0;
-	reg [4:0] record_active_delay = 0;
+	reg [5:0] record_active_delay = 0;
 	
 	assign mic_debug[0] = record_active;
 
@@ -49,9 +49,9 @@ module Microphone(
 			if (record_start) begin
 				record_active_delay_start <= 1;
 				record_active_delay <= 0;
-				mic_data_filled <= 0;
+				// mic_data_filled <= 0;
 			end else if (record_active_delay_start) begin
-				if (record_active_delay == 5'd10) begin // delay to first soundin(mic data) packet
+				if (record_active_delay == 6'd2) begin // delay to first soundin(mic data) packet
 					record_active <= 1;
 					record_active_delay_start <= 0;
 				end else
@@ -59,13 +59,7 @@ module Microphone(
 			end
 		end
 		
-		if (!record_active_p && record_active) begin
-			// start
-			// TODO: no need this, no need delay to first packet
-			mic_data <= 32'hffffffff; // silence sound
-			mic_data_filled <= 1;
-			send_counter <= 0;
-		end else if (record_active) begin
+		if (record_active) begin
 			if (mic_data_filled && mic_data_retrieved) begin
 				mic_data_filled <= 0;
 			end else if (!mic_data_filled) begin
@@ -86,6 +80,7 @@ module Microphone(
 				end
 			end
 		end
+		
 	end
 	
 	reg [4:0] recv_counter = 0; // 0 to 31
@@ -201,7 +196,12 @@ module test_Microphone;
 		I2SSend(16'ha5a5, 16'h5a5a);
 		I2SSend(16'h0001, 16'h0001);
 		I2SSend(16'hffff, 16'hffff);
+		
 		I2SSend(16'h9696, 16'h9696);
+		I2SSend(16'haaaa, 16'haaaa);
+		I2SSend(16'haaaa, 16'haaaa);
+		I2SSend(16'haaaa, 16'haaaa);
+		
 		I2SSend(16'haaaa, 16'haaaa);
 
 		#(AUDIO_CLOCK*1000);
