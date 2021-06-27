@@ -16,30 +16,9 @@ module Microphone(
 );
 
 	reg record_active = 0;
-	reg record_active_delay_start = 0;
-	reg [4:0] record_active_delay = 0;
 	
 	assign mic_debug[0] = record_active;
 
-	always@ (posedge clk) begin
-		if (record_stop) begin
-			record_active <= 0;
-			record_active_delay_start <= 0;
-			// TODO: send last available mic data
-		end else begin
-			if (record_start) begin
-				record_active_delay_start <= 1;
-				record_active_delay <= 0;
-			end else if (record_active_delay_start) begin
-				if (record_active_delay == 5'd10) begin // delay to first soundin(mic data) packet
-					record_active <= 1;
-					record_active_delay_start <= 0;
-				end else
-					record_active_delay <= record_active_delay + 1'b1;
-			end
-		end
-	end
-	
 	wire [7:0] ulawout;
 	reg [15:0] audio_data = 0; // 16 bit audio
 	LIN2MLAW lin2ulaw(audio_data[15:15-12], ulawout);
@@ -51,40 +30,41 @@ module Microphone(
 	reg audio_data_retrieved = 0;
 
 	reg mic_data_filled = 0;
-	//reg wait_first = 0;
-	assign mic_data_valid = record_active & mic_data_filled; //(record_active | wait_first) & mic_data_filled; // record_active & mic_data_filled;
-	reg record_active_p = 0;
+	assign mic_data_valid = record_active & mic_data_filled;
 	reg [1:0] send_counter = 0; // 0 to 3
 	assign mic_debug[1] = mic_data_valid;
 	
 	always@ (posedge clk) begin
-		record_active_p <= record_active;
 		
-		if (!record_active_p && record_active) begin
-			// start
-			// TODO: no need this, no need delay to first packet
-			mic_data <= 32'hffffffff; // silence sound
-			mic_data_filled <= 1;
-			send_counter <= 0;
-		end else if (mic_data_filled && mic_data_retrieved) begin
-			mic_data_filled <= 0;
-		end else if (!mic_data_filled) begin
-			if (audio_data_available_ && !audio_data_retrieved) begin
-				case (send_counter)
-					2'd0: mic_data[31:24] <= ulawout;
-					2'd1: mic_data[23:16] <= ulawout;
-					2'd2: mic_data[15:8] <= ulawout;
-					2'd3: begin
-						mic_data[7:0] <= ulawout;
-						mic_data_filled <= 1;
-					end
-				endcase
-				send_counter <= send_counter + 1'd1;
-				audio_data_retrieved <= 1;
-			end else if (!audio_data_available_ && audio_data_retrieved) begin
-				audio_data_retrieved <= 0;
+		if (record_stop) begin
+			record_active <= 0;
+			// TODO: send last available mic data
+		end else if (record_start) begin
+			record_active <= 1;
+		end
+		
+		if (record_active) begin
+			if (mic_data_filled && mic_data_retrieved) begin
+				mic_data_filled <= 0;
+			end else if (!mic_data_filled) begin
+				if (audio_data_available_ && !audio_data_retrieved) begin
+					case (send_counter)
+						2'd0: mic_data[31:24] <= ulawout;
+						2'd1: mic_data[23:16] <= ulawout;
+						2'd2: mic_data[15:8] <= ulawout;
+						2'd3: begin
+							mic_data[7:0] <= ulawout;
+							mic_data_filled <= 1;
+						end
+					endcase
+					send_counter <= send_counter + 1'd1;
+					audio_data_retrieved <= 1;
+				end else if (!audio_data_available_ && audio_data_retrieved) begin
+					audio_data_retrieved <= 0;
+				end
 			end
 		end
+		
 	end
 	
 	reg [4:0] recv_counter = 0; // 0 to 31
@@ -200,7 +180,12 @@ module test_Microphone;
 		I2SSend(16'ha5a5, 16'h5a5a);
 		I2SSend(16'h0001, 16'h0001);
 		I2SSend(16'hffff, 16'hffff);
+		
 		I2SSend(16'h9696, 16'h9696);
+		I2SSend(16'haaaa, 16'haaaa);
+		I2SSend(16'haaaa, 16'haaaa);
+		I2SSend(16'haaaa, 16'haaaa);
+		
 		I2SSend(16'haaaa, 16'haaaa);
 
 		#(AUDIO_CLOCK*1000);
