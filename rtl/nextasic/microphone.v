@@ -16,8 +16,6 @@ module Microphone(
 );
 
 	reg record_active = 0;
-	reg record_active_delay_start = 0;
-	reg [5:0] record_active_delay = 0;
 	
 	assign mic_debug[0] = record_active;
 
@@ -32,31 +30,17 @@ module Microphone(
 	reg audio_data_retrieved = 0;
 
 	reg mic_data_filled = 0;
-	//reg wait_first = 0;
-	assign mic_data_valid = record_active & mic_data_filled; //(record_active | wait_first) & mic_data_filled; // record_active & mic_data_filled;
-	reg record_active_p = 0;
+	assign mic_data_valid = record_active & mic_data_filled;
 	reg [1:0] send_counter = 0; // 0 to 3
 	assign mic_debug[1] = mic_data_valid;
 	
 	always@ (posedge clk) begin
-		record_active_p <= record_active;
 		
 		if (record_stop) begin
 			record_active <= 0;
-			record_active_delay_start <= 0;
 			// TODO: send last available mic data
-		end else begin
-			if (record_start) begin
-				record_active_delay_start <= 1;
-				record_active_delay <= 0;
-				// mic_data_filled <= 0;
-			end else if (record_active_delay_start) begin
-				if (record_active_delay == 6'd2) begin // delay to first soundin(mic data) packet
-					record_active <= 1;
-					record_active_delay_start <= 0;
-				end else
-					record_active_delay <= record_active_delay + 1'b1;
-			end
+		end else if (record_start) begin
+			record_active <= 1;
 		end
 		
 		if (record_active) begin
