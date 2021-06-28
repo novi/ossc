@@ -134,8 +134,7 @@ static THD_FUNCTION(Thread1, arg) {
   while (true) {
     palClearPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
-    // show blink if no usb device
-    // TODO:
+    // TODO: show blink if no usb mouse and keyboard
     // palSetPad(GPIOB, GPIOB_STATUS_LED);
 
     osalThreadSleepMilliseconds(500);
