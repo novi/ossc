@@ -1,0 +1,6 @@
+#ifndef MCU_I2C_STRUCTURE_H_
+#define MCU_I2C_STRUCTURE_H_
+
+#define MCU_CONTROL_BIT_USE_SPEAKER 1
+
+#endif

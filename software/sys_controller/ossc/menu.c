@@ -247,7 +247,8 @@ MENU(menu_settings, P99_PROTECT({ \
 
 // for Sound Box
 MENU(menu_soundbox, P99_PROTECT({ \
-    { "Max Volume", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_volume_max,     OPT_NOWRAP, 0, SB_VOLUME_DB_AMOUNT, sb_maxvol_db_disp } } },
+    { "Max Out Volume", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_volume_max,     OPT_NOWRAP, 0, SB_VOLUME_DB_AMOUNT, sb_maxvol_db_disp } } },
+    { "Speaker", OPT_AVCONFIG_SELECTION, { .sel = { &tc.soundbox_speaker,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "Mic Gain", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mic_gain,     OPT_NOWRAP, 0, SB_MIC_GAIN_MAX, sb_db_disp } } },
 }))
 

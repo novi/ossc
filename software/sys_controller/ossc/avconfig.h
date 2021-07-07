@@ -135,6 +135,7 @@ typedef struct {
     // for Sound Box
     alt_u8 soundbox_volume_max;
     alt_u8 soundbox_mic_gain;
+    alt_u8 soundbox_speaker;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();
