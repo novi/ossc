@@ -222,9 +222,10 @@ static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
 {
     if ( (data1 & (1 << MCU_CONTROL_BIT_USE_SPEAKER)) ) {
         // set D-class amplifier On
-        // TODO: 
+        palSetPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);
     } else {
         // off
+        palClearPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);
     }
 }
 
