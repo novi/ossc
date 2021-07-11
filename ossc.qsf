@@ -37,7 +37,7 @@
 
 
 set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE15E22C8
+set_global_assignment -name DEVICE EP4CE15E22C7
 set_global_assignment -name TOP_LEVEL_ENTITY ossc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:27:03  MAY 17, 2014"
