@@ -133,5 +133,6 @@ int8_t tlv320adc_get_mic_gain()
 
 void tlv320adc_set_mic_volume(uint8_t db)
 {
-    tlv320adc_reg_write(REG_RIGHT_VOLUME, db*2); // Rch volume db(=value/2)
+    // db should be (-12 to 20)
+    tlv320adc_reg_write(REG_RIGHT_VOLUME, db*2); // Rch volume db(=value/2) 
 }

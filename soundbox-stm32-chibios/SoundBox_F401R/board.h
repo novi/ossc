@@ -108,7 +108,8 @@
 // #define GPIOB_ARD_D6                10U
 #define GPIOB_PIN11                 11U
 #define GPIOB_PIN12                 12U
-#define GPIOB_PIN13                 13U
+// #define GPIOB_PIN13                 13U
+#define GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN            13U // Sound Box, D-class amplifier shutdown
 // #define GPIOB_PIN14                 14U
 #define GPIOB_STATUS_LED            14U // Sound Box, output
 #define GPIOB_PIN15                 15U
@@ -472,7 +473,7 @@
                                      PIN_MODE_ALTERNATE(GPIOB_I2C2_SCL) |   \
                                      PIN_MODE_INPUT(GPIOB_PIN11) |          \
                                      PIN_MODE_INPUT(GPIOB_PIN12) |          \
-                                     PIN_MODE_INPUT(GPIOB_PIN13) |          \
+                                     PIN_MODE_OUTPUT(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN) |          \
                                      PIN_MODE_OUTPUT(GPIOB_STATUS_LED) |    \
                                      PIN_MODE_INPUT(GPIOB_PIN15))
 #define VAL_GPIOB_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOB_ARD_A3) |     \
@@ -488,7 +489,7 @@
                                      PIN_OTYPE_OPENDRAIN(GPIOB_I2C2_SCL) |  \
                                      PIN_OTYPE_PUSHPULL(GPIOB_PIN11) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOB_PIN12) |      \
-                                     PIN_OTYPE_PUSHPULL(GPIOB_PIN13) |      \
+                                     PIN_OTYPE_PUSHPULL(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOB_STATUS_LED) | \
                                      PIN_OTYPE_PUSHPULL(GPIOB_PIN15))
 #define VAL_GPIOB_OSPEEDR           (PIN_OSPEED_HIGH(GPIOB_ARD_A3) |        \
@@ -504,7 +505,7 @@
                                      PIN_OSPEED_HIGH(GPIOB_I2C2_SCL) |      \
                                      PIN_OSPEED_HIGH(GPIOB_PIN11) |         \
                                      PIN_OSPEED_HIGH(GPIOB_PIN12) |         \
-                                     PIN_OSPEED_HIGH(GPIOB_PIN13) |         \
+                                     PIN_OSPEED_HIGH(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN) |         \
                                      PIN_OSPEED_HIGH(GPIOB_STATUS_LED) |    \
                                      PIN_OSPEED_HIGH(GPIOB_PIN15))
 #define VAL_GPIOB_PUPDR             (PIN_PUPDR_PULLUP(GPIOB_ARD_A3) |       \
@@ -520,7 +521,7 @@
                                      PIN_PUPDR_FLOATING(GPIOB_I2C2_SCL) |   \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN11) |        \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN12) |        \
-                                     PIN_PUPDR_PULLUP(GPIOB_PIN13) |        \
+                                     PIN_PUPDR_FLOATING(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_STATUS_LED) | \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN15))
 #define VAL_GPIOB_ODR               (PIN_ODR_HIGH(GPIOB_ARD_A3) |           \
@@ -536,7 +537,7 @@
                                      PIN_ODR_HIGH(GPIOB_I2C2_SCL) |         \
                                      PIN_ODR_HIGH(GPIOB_PIN11) |            \
                                      PIN_ODR_HIGH(GPIOB_PIN12) |            \
-                                     PIN_ODR_HIGH(GPIOB_PIN13) |            \
+                                     PIN_ODR_LOW(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN) |            \
                                      PIN_ODR_LOW(GPIOB_STATUS_LED) |       \
                                      PIN_ODR_HIGH(GPIOB_PIN15))
 #define VAL_GPIOB_AFRL              (PIN_AFIO_AF(GPIOB_ARD_A3, 0U) |        \
@@ -552,7 +553,7 @@
                                      PIN_AFIO_AF(GPIOB_I2C2_SCL, 4U) |      \
                                      PIN_AFIO_AF(GPIOB_PIN11, 0U) |         \
                                      PIN_AFIO_AF(GPIOB_PIN12, 0U) |         \
-                                     PIN_AFIO_AF(GPIOB_PIN13, 0U) |         \
+                                     PIN_AFIO_AF(GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN, 0U) |         \
                                      PIN_AFIO_AF(GPIOB_STATUS_LED, 0U) |    \
                                      PIN_AFIO_AF(GPIOB_PIN15, 0U))
 

@@ -3,6 +3,7 @@
 #include "log.h"
 #include "os/hal/extra/hal_i2c_extra.h"
 #include "keyboard.h"
+#include "../software/sys_controller/soundbox/mcu_i2c_structure.h"
 
 #if HAL_USBH_USE_HID
 #include "usbh/dev/hid.h"
@@ -33,7 +34,8 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
         #endif
         KeyboardHandleMouseInfo(report);
     } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
-        _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
+        if (report[0] || report[2] || report[3] || report[4] || report[5] || report[6] || report[7]) {
+            _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
                 report[2],
                 report[3],
@@ -42,6 +44,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 report[6],
                 report[7],
                 hidp->dev);
+        }
         KeyboardHandleKeyboardInfo(report);
     } else {
         _usbh_dbgf(hidp->dev->host, "Generic report, %d bytes", len);
@@ -132,7 +135,9 @@ static THD_FUNCTION(Thread1, arg) {
   while (true) {
     palClearPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
-    palSetPad(GPIOB, GPIOB_STATUS_LED);
+    // TODO: show blink if no usb mouse and keyboard
+    // palSetPad(GPIOB, GPIOB_STATUS_LED);
+
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     LOG_MAIN("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
@@ -213,6 +218,17 @@ void HandlePowerButton(void) // from keyboard.h
     shouldHandlePowerButton = true;
 }
 
+static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
+{
+    if ( (data1 & (1 << MCU_CONTROL_BIT_USE_SPEAKER)) ) {
+        // set D-class amplifier On
+        palSetPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);
+    } else {
+        // off
+        palClearPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);
+    }
+}
+
 // void myOnSystemHalt(const char* reason)
 // {
 //     sdWrite(&SD2, reason, strlen(reason));
@@ -276,7 +292,8 @@ int main(void)
         // IWDG->KR = 0xAAAA;
 
         if (i2c_rx_bytes) {
-            LOG_DEBUG("i2c recv %d bytes, data = %d, %d", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+            LOG_DEBUG("i2c recv %d bytes, data = 0x%02x, 0x%02x", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+            process_i2c_recv_data(i2c_rx_buf[0], i2c_rx_buf[1]);
             i2c_rx_bytes = 0;
         }
 

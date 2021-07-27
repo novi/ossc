@@ -1011,6 +1011,11 @@ init_stat_begin:
         goto init_stat_begin;
     }
 
+// for Sound Box
+#ifndef ENABLE_AUDIO
+#error need audio functions. set `ENABLE_AUDIO=y` flag to make
+#endif
+
     // start timer for auto input
     alt_timestamp_start();
 
