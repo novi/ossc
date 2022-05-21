@@ -28,7 +28,7 @@ SW toolchain build procedure
 --------------------------
 1. Download, configure, build and install RISC-V toolchain with Newlib + RV32EMC support:
 ~~~~
-git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+git clone -b master --single-branch --depth 1 --recursive https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=/opt/riscv --with-arch=rv32emc --with-abi=ilp32e
 sudo make    # sudo needed if installing under default /opt/riscv location

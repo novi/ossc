@@ -31,14 +31,14 @@ module Sender(
 	reg data_retrieved_reg = 0;
 	assign data_retrieved = data_retrieved_reg | (in_data_valid & !has_buffer_data);
 
-	always@ (negedge clk) begin // TODO: edge
+	always@ (posedge clk) begin
 		if (in_data_valid & !has_buffer_data)
 			data_retrieved_reg <= 1;
 		else
 			data_retrieved_reg <= 0;
 	end
 
-	always@ (negedge clk) begin
+	always@ (posedge clk) begin
 		case (state)
 			READY: begin
 				if (audio_sample_request_tick) begin
