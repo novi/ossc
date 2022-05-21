@@ -338,6 +338,14 @@ void KeyboardHandleKeyboardInfo(const uint8_t *report)
                 HandlePowerButton();
             } else if (hidkeycode == 0x3e) { // F5 key
                 NVIC_SystemReset(); // soft reset
+            } else if (hidkeycode == 0x3f) { // F6 key
+                // show NMI monitor, simulate leftcmd+rightcmd+~
+                nextModifierCode = 0;
+                nextModifierCode |= 1 << 3; // leftcmd
+                nextModifierCode |= 1 << 4; // rightcmd
+                data[2] = nextModifierCode | 0x80;
+                data[1] = hidkeycodeToNextscancode(0x35); // key ~
+                SendSPIData(data, 3);
             }
         }
     }
