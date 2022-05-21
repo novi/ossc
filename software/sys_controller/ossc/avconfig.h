@@ -59,6 +59,7 @@
 // for Sound Box
 #define SB_VOLUME_DB_AMOUNT    43
 #define SB_MIC_GAIN_MAX     20
+#define SB_MOUSE_SPEED 7
 
 static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
 
@@ -136,6 +137,7 @@ typedef struct {
     alt_u8 soundbox_volume_max;
     alt_u8 soundbox_mic_gain;
     alt_u8 soundbox_speaker;
+    alt_u8 soundbox_mouse_speed;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();

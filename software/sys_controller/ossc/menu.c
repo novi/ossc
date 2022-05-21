@@ -103,6 +103,7 @@ static void alc_h_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LN
 // for Sound Box
 static void sb_maxvol_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v-SB_VOLUME_DB_AMOUNT)); }
 static void sb_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v)); }
+static void sb_mouse_speed_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d", ((alt_8)v+1)); }
 
 static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
 static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, profile_disp};
@@ -250,6 +251,7 @@ MENU(menu_soundbox, P99_PROTECT({ \
     { "Max Out Volume", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_volume_max,     OPT_NOWRAP, 0, SB_VOLUME_DB_AMOUNT, sb_maxvol_db_disp } } },
     { "Speaker", OPT_AVCONFIG_SELECTION, { .sel = { &tc.soundbox_speaker,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "Mic Gain", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mic_gain,     OPT_NOWRAP, 0, SB_MIC_GAIN_MAX, sb_db_disp } } },
+    { "Mouse Speed", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mouse_speed,     OPT_NOWRAP, 0, SB_MOUSE_SPEED, sb_mouse_speed_disp } } },
 }))
 
 

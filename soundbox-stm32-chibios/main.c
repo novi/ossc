@@ -3,6 +3,7 @@
 #include "log.h"
 #include "os/hal/extra/hal_i2c_extra.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "../software/sys_controller/soundbox/mcu_i2c_structure.h"
 
 #if HAL_USBH_USE_HID
@@ -227,6 +228,8 @@ static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
         // off
         palClearPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);
     }
+    uint8_t mouseSpeed = (data1 >> MCU_CONTROL_BIT_MOUSE_SPEED) & 0x7; // 3bit
+    MouseSetSpeed(mouseSpeed);
 }
 
 // void myOnSystemHalt(const char* reason)

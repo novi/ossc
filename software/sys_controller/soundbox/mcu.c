@@ -26,9 +26,15 @@ uint8_t mcu_send_recv_data(uint8_t data1, uint8_t data2)
     return recvData;
 }
 
-uint8_t mcu_update_control(uint8_t useSpeaker)
+uint8_t mcu_update_control(uint8_t useSpeaker, uint8_t mouseSpeed)
 {
-    uint8_t recvData = mcu_send_recv_data( ((useSpeaker ? 1 : 0 ) << MCU_CONTROL_BIT_USE_SPEAKER), 0x5a);
+    uint8_t recvData = mcu_send_recv_data(
+        // first byte
+        ((useSpeaker ? 1 : 0 ) << MCU_CONTROL_BIT_USE_SPEAKER)
+        | ( (mouseSpeed & 0x7) << MCU_CONTROL_BIT_MOUSE_SPEED)
+    ,
+    // second byte
+    0x5a);
     return 0;
 }
 

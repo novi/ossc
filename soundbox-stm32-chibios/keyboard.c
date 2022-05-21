@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "log.h"
+#include "mouse.h"
 #include <string.h>
 
 typedef enum {
@@ -54,26 +55,7 @@ void spi_callback(SPIDriver *spip)
 static uint8_t mouse_left_up = 1;
 static uint8_t mouse_right_up = 1;
 
-//#define MOUSE_MOVE_SCALE_FACTOR 8
 
-static int8_t mouseAccTable[] = {
-    0, // 0
-    1, // 1
-    1, // 2
-    1, // 3
-    2, // 4
-    2, // 5
-    2, // 6
-    3, // 7
-    3, // 8
-    4, // 9
-    4, // 10
-    5, // 11
-    5, // 12
-    6, // 13
-    6, // 14
-    7, // 15
-};
 
 void KeyboardHandleMouseInfo(const uint8_t *report)
 {
@@ -98,25 +80,11 @@ void KeyboardHandleMouseInfo(const uint8_t *report)
     int8_t movY = report[2];
     if (movX != 0 || movY != 0) {
 
-        uint8_t absx = movX < 0 ? -movX : movX;
-        int8_t valx;
-        if (sizeof(mouseAccTable) > absx) {
-            valx = movX < 0 ? mouseAccTable[absx] : -mouseAccTable[absx]; // swap sign
-        } else {
-            // valx = -(movX/MOUSE_MOVE_SCALE_FACTOR);
-            valx = movX < 0 ? mouseAccTable[sizeof(mouseAccTable)-1] : -mouseAccTable[sizeof(mouseAccTable)-1];
-        }
+        int8_t valx = MouseFixMove(movX);
         d0 |= (valx << 1 ) & 0xfe;
 
+        int8_t valy = MouseFixMove(movY);
 
-        uint8_t absy = movY < 0 ? -movY : movY;
-        int8_t valy;
-        if (sizeof(mouseAccTable) > absy) {
-            valy = movY < 0 ? mouseAccTable[absy] : -mouseAccTable[absy]; // swap sign
-        } else {
-            //valy = -(movY/MOUSE_MOVE_SCALE_FACTOR);
-            valy = movY < 0 ? mouseAccTable[sizeof(mouseAccTable)-1] : -mouseAccTable[sizeof(mouseAccTable)-1];
-        }
         d1 |= (valy << 1 ) & 0xfe;
         LOG_DEBUG("raw (%d, %d), mov (%d, %d)", report[1], report[2], movX, movY);
     }

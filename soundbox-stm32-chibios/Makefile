@@ -127,7 +127,8 @@ CSRC = $(ALLCSRC) \
        $(TESTSRC) \
        main.c \
        faultdebug.c \
-       keyboard.c
+       keyboard.c \
+       mouse.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

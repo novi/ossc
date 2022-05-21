@@ -64,7 +64,7 @@ static void soundbox_loop_ping_tick()
     counter++;
     printf("sb loop tick %d\n", counter);
     // mcu_send_data_test(counter);
-    mcu_update_control(tc.soundbox_speaker);
+    mcu_update_control(tc.soundbox_speaker, tc.soundbox_mouse_speed);
 
     printf("audio sample rate = 0x%02x, bck = 0x%04x, power = 0x%02x, clock = 0x%02x, clock error = 0x%02x, mute = 0x%02x\n",
     pcm5122_get_current_samplerate(),

@@ -1,6 +1,7 @@
 #ifndef MCU_I2C_STRUCTURE_H_
 #define MCU_I2C_STRUCTURE_H_
 
-#define MCU_CONTROL_BIT_USE_SPEAKER 1
+#define MCU_CONTROL_BIT_USE_SPEAKER 1 // 1bit
+#define MCU_CONTROL_BIT_MOUSE_SPEED 2 // 3bit
 
 #endif
