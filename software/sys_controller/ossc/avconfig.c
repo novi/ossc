@@ -68,7 +68,8 @@ const avconfig_t tc_default = {
     .soundbox_volume_max = SB_VOLUME_DB_AMOUNT/2,
     .soundbox_mic_gain = 0,
     .soundbox_speaker = DEFAULT_ON,
-    .soundbox_mouse_speed = 0
+    .soundbox_mouse_speed = 0,
+    .soundbox_detect_no_usbkeyboard = DEFAULT_ON,
 };
 
 int set_default_avconfig()

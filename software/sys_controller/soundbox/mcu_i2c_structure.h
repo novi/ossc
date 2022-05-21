@@ -3,5 +3,6 @@
 
 #define MCU_CONTROL_BIT_USE_SPEAKER 1 // 1bit
 #define MCU_CONTROL_BIT_MOUSE_SPEED 2 // 3bit
+#define MCU_CONTROL_BIT_DETECT_NOUSB_KEYBOARD 5 // 1bit
 
 #endif

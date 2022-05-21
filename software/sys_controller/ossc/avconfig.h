@@ -138,6 +138,7 @@ typedef struct {
     alt_u8 soundbox_mic_gain;
     alt_u8 soundbox_speaker;
     alt_u8 soundbox_mouse_speed;
+    alt_u8 soundbox_detect_no_usbkeyboard;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();

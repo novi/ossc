@@ -17,7 +17,7 @@ static THD_WORKING_AREA(waTestHID, 1024);
 static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
     const uint8_t *report = (const uint8_t *)hidp->config->report_buffer;
 
-    if (hidp->type == USBHHID_DEVTYPE_BOOT_MOUSE) {
+    if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_MOUSE) {
         #if SHOW_MOUSE_LOG
         _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
                 report[0],
@@ -34,7 +34,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
         }
         #endif
         KeyboardHandleMouseInfo(report);
-    } else if (hidp->type == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
+    } else if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
         if (report[0] || report[2] || report[3] || report[4] || report[5] || report[6] || report[7]) {
             _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
@@ -55,6 +55,8 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
 static USBH_DEFINE_BUFFER(uint8_t report[HAL_USBHHID_MAX_INSTANCES][8]);
 static USBHHIDConfig hidcfg[HAL_USBHHID_MAX_INSTANCES];
 
+static bool g_hasKeyboard = false; // usb keyboard connected
+
 static void ThreadTestHID(void *p) {
     (void)p;
     uint8_t i;
@@ -70,6 +72,7 @@ static void ThreadTestHID(void *p) {
     }
 
     for (;;) {
+        bool hasKeyboard = false;
         for (i = 0; i < HAL_USBHHID_MAX_INSTANCES; i++) {
         	USBHHIDDriver *const hidp = &USBHHIDD[i];
             if (usbhhidGetState(hidp) == USBHHID_STATE_ACTIVE) {
@@ -81,6 +84,7 @@ static void ThreadTestHID(void *p) {
                 kbd_led_states[i] = 1;
             } else if (usbhhidGetState(hidp) == USBHHID_STATE_READY) {
                 if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
+                    hasKeyboard = true;
                     USBH_DEFINE_BUFFER(uint8_t val);
                     val = kbd_led_states[i] << 1;
                     if (val == 0x08) {
@@ -92,6 +96,7 @@ static void ThreadTestHID(void *p) {
                 }
             }
         }
+        g_hasKeyboard = hasKeyboard;
         chThdSleepMilliseconds(200);
     }
 
@@ -126,6 +131,10 @@ static void setup_i2c_(void)
     }
 }
 
+// USB keyboard detect
+static bool g_detect_nousb_keyboard = false;
+static uint8_t g_detect_nousb_keyboard_count = 0;
+
 // -- counter, LED blink thread
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
@@ -136,12 +145,25 @@ static THD_FUNCTION(Thread1, arg) {
   while (true) {
     palClearPad(GPIOB, GPIOB_STATUS_LED);
     osalThreadSleepMilliseconds(500);
-    // TODO: show blink if no usb mouse and keyboard
-    // palSetPad(GPIOB, GPIOB_STATUS_LED);
-
+    if (g_detect_nousb_keyboard && !g_hasKeyboard) {
+        // no keyboard, blink LED
+        palSetPad(GPIOB, GPIOB_STATUS_LED);
+    }
     osalThreadSleepMilliseconds(500);
     // sdWrite(&SD2, (uint8_t*)"Hello\r\n", 7);
     LOG_MAIN("counter=%d, tick=%d\r\n", counter, osalOsGetSystemTimeX() );
+    if (g_hasKeyboard) {
+        g_detect_nousb_keyboard_count = 0;
+    } else {
+        // no usb keyboard
+        if (g_detect_nousb_keyboard && g_detect_nousb_keyboard_count >= 20) { // 20 secs
+            NVIC_SystemReset(); // soft reset
+        }
+        if (g_detect_nousb_keyboard) {
+            g_detect_nousb_keyboard_count++;
+        }
+    }
+
     counter++;
   }
 }
@@ -230,6 +252,8 @@ static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
     }
     uint8_t mouseSpeed = (data1 >> MCU_CONTROL_BIT_MOUSE_SPEED) & 0x7; // 3bit
     MouseSetSpeed(mouseSpeed);
+
+    g_detect_nousb_keyboard = (data1 & (1 << MCU_CONTROL_BIT_DETECT_NOUSB_KEYBOARD)) ? 1 : 0;
 }
 
 // void myOnSystemHalt(const char* reason)

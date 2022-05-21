@@ -252,6 +252,7 @@ MENU(menu_soundbox, P99_PROTECT({ \
     { "Speaker", OPT_AVCONFIG_SELECTION, { .sel = { &tc.soundbox_speaker,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "Mic Gain", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mic_gain,     OPT_NOWRAP, 0, SB_MIC_GAIN_MAX, sb_db_disp } } },
     { "Mouse Speed", OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.soundbox_mouse_speed,     OPT_NOWRAP, 0, SB_MOUSE_SPEED, sb_mouse_speed_disp } } },
+    { "DetectNoUSBKeybo", OPT_AVCONFIG_SELECTION, { .sel = { &tc.soundbox_detect_no_usbkeyboard,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 
 
