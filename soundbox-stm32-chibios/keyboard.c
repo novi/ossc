@@ -336,7 +336,9 @@ void KeyboardHandleKeyboardInfo(const uint8_t *report)
             } else if (hidkeycode == 0x49 || // insert key
                         hidkeycode == 0x3d) { // F4 key
                 HandlePowerButton();
-            } 
+            } else if (hidkeycode == 0x3e) { // F5 key
+                NVIC_SystemReset(); // soft reset
+            }
         }
     }
     
