@@ -10,7 +10,8 @@
 #include "usbh/dev/hid.h"
 #include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 
-#define SHOW_MOUSE_LOG (0)
+#define SHOW_MOUSE_MOVE_LOG (0)
+#define SHOW_KEYBOARD_MOUSE_CLICK_LOG (0)
 
 static THD_WORKING_AREA(waTestHID, 1024);
 
@@ -18,13 +19,14 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
     const uint8_t *report = (const uint8_t *)hidp->config->report_buffer;
 
     if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_MOUSE) {
-        #if SHOW_MOUSE_LOG
+        #if SHOW_MOUSE_MOVE_LOG
         _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
                 report[0],
                 (int8_t)report[1],
                 (int8_t)report[2],
                 hidp->dev);
-        #else
+        #endif
+        #if SHOW_KEYBOARD_MOUSE_CLICK_LOG
         if (report[0] && report[1] == 0 && report[2] == 0) {
             _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
                 report[0],
@@ -35,6 +37,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
         #endif
         KeyboardHandleMouseInfo(report);
     } else if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_KEYBOARD) {
+        #if SHOW_KEYBOARD_MOUSE_CLICK_LOG
         if (report[0] || report[2] || report[3] || report[4] || report[5] || report[6] || report[7]) {
             _usbh_dbgf(hidp->dev->host, "Keyboard report: modifier=%02x, keys=%02x %02x %02x %02x %02x %02x from device %x",
                 report[0],
@@ -46,6 +49,7 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
                 report[7],
                 hidp->dev);
         }
+        #endif
         KeyboardHandleKeyboardInfo(report);
     } else {
         _usbh_dbgf(hidp->dev->host, "Generic report, %d bytes", len);
@@ -111,6 +115,7 @@ static uint8_t i2c_has_slave_request = 0;
 static uint8_t i2c_tx_buf[1] = {0};
 static uint8_t i2c_rx_buf[2] = {0, 0};
 
+// TODO: config label in struct
 static const I2CConfig i2c_config = {
     OPMODE_I2C,
     100000,
@@ -194,12 +199,13 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
 extern void spi_callback(SPIDriver *spip); // for keyboard.h
 // --- SPI
 static const SPIConfig spi_config = {
-    false, // no circular buffer
-    spi_callback, // callback
-    GPIOA,
-    GPIOA_SPI_SS,
-    SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM,
-    0
+    .circular = false,
+    .data_cb = spi_callback, // callback
+    .error_cb = NULL, // TODO: handle error
+    .ssport = GPIOA,
+    .sspad = GPIOA_SPI_SS,
+    .cr1 = SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM,
+    .cr2 = 0
 };
 
 // --- GPIO
@@ -243,6 +249,7 @@ void HandlePowerButton(void) // from keyboard.h
 
 static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
 {
+    (void)data2;
     if ( (data1 & (1 << MCU_CONTROL_BIT_USE_SPEAKER)) ) {
         // set D-class amplifier On
         palSetPad(GPIOB, GPIOB_OUTPUT_AMPLIFIER_SHUTDOWN);

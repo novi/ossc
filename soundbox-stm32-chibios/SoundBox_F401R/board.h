@@ -75,7 +75,8 @@
 #define GPIOA_USART2_RX             3U
 // #define GPIOA_ARD_A2                4U
 // #define GPIOA_ADC1_IN4              4U
-#define GPIOA_SPI_SS                4U // Sound Box, output, neg logic
+ // Sound Box, output, neg logic
+#define GPIOA_SPI_SS                4U
 // #define GPIOA_ARD_D13               5U
 #define GPIOA_SPI1_SCK              5U
 // #define GPIOA_ARD_D12               6U

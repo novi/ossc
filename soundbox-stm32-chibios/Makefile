@@ -100,21 +100,19 @@ include $(CHIBIOS)/os/license/license.mk
 # Startup files.
 include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files (optional).
-#include $(CHIBIOS)/os/hal/hal.mk
-#include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
-include ./os/hal/extra/extra.mk
 include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include ./SoundBox_F401R/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
+include ./os/hal/extra/extra.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
-include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
+include $(CHIBIOS)/os/common/ports/ARMv7-M/compilers/GCC/mk/port.mk
 # Auto-build files in ./source recursively.
 include $(CHIBIOS)/tools/mk/autobuild.mk
 # Other files (optional).
-#include $(CHIBIOS)/test/lib/test.mk
+#include $(CHIBIOS)/os/test/test.mk
 #include $(CHIBIOS)/test/rt/rt_test.mk
 #include $(CHIBIOS)/test/oslib/oslib_test.mk
 
