@@ -1,3 +1,21 @@
+/*
+
+   Copyright 2021-24 Yusuke Ito
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 #include "keyboard.h"
 #include "log.h"
 #include "mouse.h"
@@ -49,7 +67,7 @@ void spi_callback(SPIDriver *spip)
     spiUnselectI(&SPID1);
     spi_is_sending = 0;
 
-    LOG_DEBUG("spi send callback state %d", spip->state);
+    LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
 }
 
 static uint8_t mouse_left_up = 1;

@@ -22,6 +22,7 @@ void HardFault_Handler(void)
 // does not get optimized away
 __attribute__((optimize("O0")))
 void my_fault_handler_c(sContextStateFrame *frame) {
+  (void)frame;
   // If and only if a debugger is attached, execute a breakpoint
   // instruction so we can take a look at what triggered the fault
   HALT_IF_DEBUGGING();

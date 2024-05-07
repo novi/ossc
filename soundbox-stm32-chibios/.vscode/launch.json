@@ -8,8 +8,8 @@
             "name": "OpenOCD-Debug",
             "executable": "./build/ch.elf",
             "configFiles": [
-                "interface/stlink-v2.cfg",
-                "target/stm32f4x_stlink.cfg"
+                "interface/stlink-v2-1.cfg",
+                "target/stm32f4x.cfg"
             ],
             "cwd": "${workspaceRoot}",
             "gdbpath": "arm-none-eabi-gdb",
