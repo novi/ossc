@@ -188,10 +188,12 @@
 /*===========================================================================*/
 
 /* main driver */
-#define HAL_USBH_PORT_DEBOUNCE_TIME                   200
+#define HAL_USBH_PORT_DEBOUNCE_TIME                   500
 #define HAL_USBH_PORT_RESET_TIMEOUT                   500
-#define HAL_USBH_DEVICE_ADDRESS_STABILIZATION         20
+#define HAL_USBH_DEVICE_ADDRESS_STABILIZATION         50
 #define HAL_USBH_CONTROL_REQUEST_DEFAULT_TIMEOUT	  OSAL_MS2I(1000)
+
+#define HAL_USBH_USE_IAD                              TRUE
 
 /* MSD */
 #define HAL_USBH_USE_MSD                              FALSE

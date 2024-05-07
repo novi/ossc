@@ -67,7 +67,7 @@ void spi_callback(SPIDriver *spip)
     spiUnselectI(&SPID1);
     spi_is_sending = 0;
 
-    LOG_DEBUG("spi send callback state %d", spip->state);
+    LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
 }
 
 static uint8_t mouse_left_up = 1;
