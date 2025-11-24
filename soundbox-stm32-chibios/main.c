@@ -286,9 +286,31 @@ static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
 //     sdWrite(&SD2, reason, strlen(reason));
 // }
 
+static void printResetReason(uint32_t csr_reg)
+{
+    LOG_MAIN("reset detected: ");
+    if (csr_reg & RCC_CSR_IWDGRSTF) {
+        LOG_MAIN("IWDG ");
+    } else if (csr_reg & RCC_CSR_WWDGRSTF) {
+        LOG_MAIN("WWDG ");
+    } else if (csr_reg & RCC_CSR_SFTRSTF) {
+        LOG_MAIN("SFT ");
+    } else if (csr_reg & RCC_CSR_PINRSTF) {
+        LOG_MAIN("PIN ");
+    } else if (csr_reg & RCC_CSR_PORRSTF) {
+        LOG_MAIN("POR ");
+    } else if (csr_reg & RCC_CSR_BORRSTF) {
+        LOG_MAIN("BOR ");
+    } else if (csr_reg & RCC_CSR_LPWRRSTF) {
+        LOG_MAIN("LPWR ");
+    }
+    LOG_MAIN("\r\n");
+}
+
 int main(void)
 {
 
+    uint32_t csr_reg = RCC->CSR;
     //   IWDG->KR = 0x5555;
     //   IWDG->PR = 7;
 
@@ -301,8 +323,13 @@ int main(void)
     spiUnselect(&SPID1);
 
     // Serial USART2
+    // baud=115200
     sdStart(&SD2, NULL);
     LOG_MAIN("mcu started, waiting ossc starts\r\n");
+
+    printResetReason(csr_reg);
+    // clear reset reason flags
+    RCC->CSR |= RCC_CSR_RMVF;
 
     osalThreadSleepMilliseconds(100);
     osalThreadSleepMilliseconds(1000);
