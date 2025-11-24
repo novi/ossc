@@ -29,9 +29,10 @@ typedef enum {
 
 #define SPI_DATA_SIZE_MAX (3)
 static uint8_t spi_send_buf[SPI_DATA_SIZE_MAX];
-static uint8_t spi_recv_buf[SPI_DATA_SIZE_MAX];
+// static uint8_t spi_recv_buf[SPI_DATA_SIZE_MAX];
 volatile uint8_t spi_is_sending = 0;
 
+// should be called same thread
 void SendSPIData(uint8_t* buf, size_t size)
 {
     osalDbgAssert(SPI_DATA_SIZE_MAX <= size, "SendSPIData max size exceed.");
@@ -40,14 +41,16 @@ void SendSPIData(uint8_t* buf, size_t size)
     // command, data[0], data[1]...
     LOG_DEBUG("send spi %02x %02x %02x", buf[0], buf[1], buf[2]);
 
+    // TODO: may not need?
     systime_t start, end;
     start = osalOsGetSystemTimeX();
-    end = start + OSAL_MS2I(10); // in ms
+    end = start + OSAL_MS2I(50); // in ms
     while (spi_is_sending) {
         if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
             // timeout
             LOG_DEBUG("spi send data wait timeout");
-            break;
+            osalDbgAssert(false, "SPI send timeout");
+            return;
         }
     }
 
@@ -58,7 +61,8 @@ void SendSPIData(uint8_t* buf, size_t size)
 
     spi_is_sending = 1;
     spiSelectI(&SPID1);
-    spiStartExchangeI(&SPID1, size, spi_send_buf, spi_recv_buf);
+    // spiStartExchangeI(&SPID1, size, spi_send_buf, spi_recv_buf);
+    spiStartSend(&SPID1, size, spi_send_buf);
 }
 
 void spi_callback(SPIDriver *spip)
