@@ -183,6 +183,8 @@ static THD_FUNCTION(Thread1, arg) {
     } else {
         // no usb keyboard
         if (g_detect_nousb_keyboard && g_detect_nousb_keyboard_count >= 20) { // 20 secs
+            LOG_MAIN("no keyboard detected. restarting...\r\n");
+            osalThreadSleepMilliseconds(500);
             NVIC_SystemReset(); // soft reset
         }
         if (g_detect_nousb_keyboard) {
