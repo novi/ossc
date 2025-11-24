@@ -26,4 +26,6 @@ extern void HandlePowerButton(void);
 void KeyboardHandleMouseInfo(const uint8_t *report);
 void KeyboardHandleKeyboardInfo(const uint8_t *report);
 
+void KeyboardSendPendingDataIfNeeded(void);
+
 #endif // _KEYBOARD_H

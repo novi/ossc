@@ -31,8 +31,10 @@
 
 #if DEBUG_LOG
 #define LOG_DEBUG(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
+#define LOG_DEBUG_TEST(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
 #else
 #define LOG_DEBUG(...) do { } while(0);
+#define LOG_DEBUG_TEST(...) _usbh_dbgf(&USBHD1, __VA_ARGS__);
 #endif
 
 #define LOG(...) do { } while(0); // _usbh_dbgf(&USBHD1, __VA_ARGS__);, not work?

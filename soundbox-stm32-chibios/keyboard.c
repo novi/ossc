@@ -24,13 +24,18 @@
 typedef enum {
     SPIHeader_Keyboard = 1,
     SPIHeader_Mouse = 2,
-    SPIHeader_Mic = 3
+    // SPIHeader_Mic = 3
 } SPIHeader;
 
 #define SPI_DATA_SIZE_MAX (3)
 static uint8_t spi_send_buf[SPI_DATA_SIZE_MAX];
 // static uint8_t spi_recv_buf[SPI_DATA_SIZE_MAX];
-volatile uint8_t spi_is_sending = 0;
+
+static uint8_t spi_send_buf2[SPI_DATA_SIZE_MAX];
+static volatile uint8_t spi_is_sending = 0;
+static volatile uint8_t spi_pending_data_size = 0;
+// static volatile uint8_t spi_is_wait_for_sending = 0;
+// static volatile systime_t spi_timeout_tick = 0;
 
 // should be called same thread
 void SendSPIData(uint8_t* buf, size_t size)
@@ -41,17 +46,33 @@ void SendSPIData(uint8_t* buf, size_t size)
     // command, data[0], data[1]...
     LOG_DEBUG("send spi %02x %02x %02x", buf[0], buf[1], buf[2]);
 
-    // TODO: may not need?
-    systime_t start, end;
-    start = osalOsGetSystemTimeX();
-    end = start + OSAL_MS2I(50); // in ms
-    while (spi_is_sending) {
-        if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
-            // timeout
-            LOG_DEBUG("spi send data wait timeout");
-            osalDbgAssert(false, "SPI send timeout");
-            return;
+    uint8_t header = buf[0];
+    // systime_t start, end;
+    // start = osalOsGetSystemTimeX();
+    // end = start + OSAL_MS2I(5000); // in ms
+    // while (spi_is_sending) {
+    //     spi_is_wait_for_sending = 1;
+    //     if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+    //         // timeout
+    //         LOG_DEBUG_TEST("spi send data wait timeout, header=%d", header);
+    //         // osalDbgAssert(false, "SPI send timeout");
+    //         spi_timeout_tick = osalOsGetSystemTimeX();
+    //         return;
+    //     }
+    // }
+    if (spi_is_sending) {
+        if (spi_pending_data_size > 0) {
+            LOG_DEBUG_TEST("spi is sending, but pending buf is full");
+        } else {
+            if (header == SPIHeader_Keyboard) {
+                memcpy(spi_send_buf2, buf, size);
+                spi_pending_data_size = size;
+                LOG_DEBUG("spi is sending, pending filled.");
+            } else {
+                LOG_DEBUG_TEST("spi is sending, no keyboard event is dropped.");
+            }
         }
+        return;
     }
 
     // for(size_t i = 0; spi_is_sending && i < 10000; i++);
@@ -59,19 +80,55 @@ void SendSPIData(uint8_t* buf, size_t size)
     
     memcpy(spi_send_buf, buf, size);
 
+    // spi_is_wait_for_sending = 0;
     spi_is_sending = 1;
     spiSelectI(&SPID1);
     // spiStartExchangeI(&SPID1, size, spi_send_buf, spi_recv_buf);
-    spiStartSend(&SPID1, size, spi_send_buf);
+    spiStartSendI(&SPID1, size, spi_send_buf);  
+    // LOG_DEBUG_TEST("SPI");
 }
 
-void spi_callback(SPIDriver *spip)
+void KeyboardSendPendingDataIfNeeded(void)
+{
+    if (spi_pending_data_size > 0) {
+        spiSelectI(&SPID1);
+        spiStartSendI(&SPID1, spi_pending_data_size, spi_send_buf2);
+        spi_pending_data_size = 0;
+    }
+}
+
+void spi_callback_data(SPIDriver *spip)
+{
+    (void)spip;
+
+    // if (spi_is_wait_for_sending) {
+    //     systime_t diff = osalTimeDiffX(spi_timeout_tick, osalOsGetSystemTimeX());
+    //     LOG_DEBUG_TEST("spi send callback state %d (wait time %d)", spip->state, diff); // 4 = SPI_COMPLETE
+    // } else {
+    //     LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
+    // }
+
+    LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
+    
+    if (spi_pending_data_size > 0) {
+        // pending data, send now
+        // uint8_t size = spi_pending_data_size;
+        // spiStartSendI(&SPID1, size, spi_send_buf2);
+        LOG_DEBUG("send pending data");
+        // sendDataIfNeeded();
+    } else {
+        spiUnselectI(&SPID1);
+        spi_is_sending = 0;
+    }
+}
+
+void spi_callback_error(SPIDriver *spip)
 {
     (void)spip;
     spiUnselectI(&SPID1);
     spi_is_sending = 0;
 
-    LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
+    LOG_DEBUG_TEST("spi send error callback state %d", spip->state); // 4 = SPI_COMPLETE
 }
 
 static uint8_t mouse_left_up = 1;

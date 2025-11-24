@@ -118,8 +118,11 @@ static void ThreadTestHID(void *p) {
                 }
             }
         }
-        g_hasKeyboard = hasKeyboard;
-        chThdSleepMilliseconds(200);
+        g_hasKeyboard = hasKeyboard;        
+        for(uint8_t i = 0; i < 40; i++) {
+            KeyboardSendPendingDataIfNeeded();
+            chThdSleepMilliseconds(5);
+        }
     }
 
 }
@@ -214,12 +217,13 @@ void onI2CSlaveRequest(I2CDriver *i2cp)
     i2c_has_slave_request = 1;
 }
 
-extern void spi_callback(SPIDriver *spip); // for keyboard.h
+extern void spi_callback_data(SPIDriver *spip); // for keyboard.h
+extern void spi_callback_error(SPIDriver *spip); 
 // --- SPI
 static const SPIConfig spi_config = {
     .circular = false,
-    .data_cb = spi_callback, // callback
-    .error_cb = NULL, // TODO: handle error
+    .data_cb = spi_callback_data, // callback
+    .error_cb = spi_callback_error, // TODO: handle error
     .ssport = GPIOA,
     .sspad = GPIOA_SPI_SS,
     .cr1 = SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM,
