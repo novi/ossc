@@ -128,8 +128,8 @@ static void ThreadTestHID(void *p) {
 /// --- i2c 
 void onI2CSlaveRequest(I2CDriver *i2cp);
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes);
-static size_t i2c_rx_bytes = 0;
-static uint8_t i2c_has_slave_request = 0;
+static volatile size_t i_i2c_rx_bytes = 0;
+static volatile uint8_t i_i2c_has_slave_request = 0;
 static uint8_t i2c_tx_buf[1] = {0};
 static uint8_t i2c_rx_buf[2] = {0, 0};
 
@@ -210,30 +210,32 @@ void USBH_DEBUG_OUTPUT_CALLBACK(const uint8_t *buff, size_t len)
 	sdWrite(&SD2, (const uint8_t *)"\r\n", 2);
 }
 
+// ISR Handler
 void onI2CSlaveReceive(I2CDriver *i2cp, const uint8_t *rxbuf, size_t rxbytes)
 {
     (void)i2cp;
 	(void)rxbuf;
 	(void)rxbytes;
-    i2c_rx_bytes = rxbytes;
+    i_i2c_rx_bytes = rxbytes;
 }
 
+// ISR Handler
 void onI2CSlaveRequest(I2CDriver *i2cp)
 {
     (void)i2cp;
     i2c_tx_buf[0] = 0xa5; // TODO: dummy for now
     // TODO: send slave transmission if needed
     // i2cSlaveStartTransmission(&I2CD2, i2c_tx_buf, 1);
-    i2c_has_slave_request = 1;
+    i_i2c_has_slave_request = 1;
 }
 
-extern void spi_callback_data(SPIDriver *spip); // for keyboard.h
-extern void spi_callback_error(SPIDriver *spip); 
+extern void spi_callback_data(SPIDriver *spip); // in keyboard.h
+extern void spi_callback_error(SPIDriver *spip); // in keyboard.h
 // --- SPI
 static const SPIConfig spi_config = {
     .circular = false,
     .data_cb = spi_callback_data, // callback
-    .error_cb = spi_callback_error, // TODO: handle error
+    .error_cb = spi_callback_error,
     .ssport = GPIOA,
     .sspad = GPIOA_SPI_SS,
     .cr1 = SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM,
@@ -387,10 +389,17 @@ int main(void)
 
         // IWDG->KR = 0xAAAA;
 
-        if (i2c_rx_bytes) {
-            LOG_DEBUG("i2c recv %d bytes, data = 0x%02x, 0x%02x", i2c_rx_bytes, i2c_rx_buf[0], i2c_rx_buf[1]);
+        size_t i2cRxBytes;
+        chSysLock();
+        i2cRxBytes = i_i2c_rx_bytes;
+        chSysUnlock();
+
+        if (i2cRxBytes) {
+            LOG_DEBUG("i2c recv %d bytes, data = 0x%02x, 0x%02x", i2cRxBytes, i2c_rx_buf[0], i2c_rx_buf[1]);
             process_i2c_recv_data(i2c_rx_buf[0], i2c_rx_buf[1]);
-            i2c_rx_bytes = 0;
+            chSysLock();
+            i_i2c_rx_bytes = 0;
+            chSysUnlock();
         }
 
         if (I2CD2.errors) {
@@ -400,12 +409,18 @@ int main(void)
             setup_i2c_();
         }
 
-        if (i2c_has_slave_request) {
+        uint8_t hasI2CSlaveRequest;
+        chSysLock();
+        hasI2CSlaveRequest = i_i2c_has_slave_request;
+        chSysUnlock();
+        if (hasI2CSlaveRequest) {
             LOG_DEBUG("i2c has got slave request");
             // osalThreadSleepMilliseconds(100);
             i2cStop(&I2CD2);
             setup_i2c_();
-            i2c_has_slave_request = 0;
+            chSysLock();
+            i_i2c_has_slave_request = 0;
+            chSysUnlock();
         }
 
         if (shouldHandlePowerButton) {
