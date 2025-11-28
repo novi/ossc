@@ -28,7 +28,7 @@
 #include "usbh/dev/hid.h"
 #include "usbh/debug.h"		/* for _usbh_dbg/_usbh_dbgf */
 
-#define SHOW_MOUSE_MOVE_LOG (0)
+#define SHOW_MOUSE_ALL_LOG (0)
 #define SHOW_KEYBOARD_MOUSE_CLICK_LOG (0)
 
 static THD_WORKING_AREA(waTestHID, 1024);
@@ -37,11 +37,16 @@ static void _hid_report_callback(USBHHIDDriver *hidp, uint16_t len) {
     const uint8_t *report = (const uint8_t *)hidp->config->report_buffer;
 
     if (usbhhidGetType(hidp) == USBHHID_DEVTYPE_BOOT_MOUSE) {
-        #if SHOW_MOUSE_MOVE_LOG
-        _usbh_dbgf(hidp->dev->host, "Mouse report: buttons=%02x, Dx=%d, Dy=%d from device %x",
+        #if SHOW_MOUSE_ALL_LOG
+        _usbh_dbgf(hidp->dev->host, "Mouse report: buttons[0]=%02x, Dx[1]=%d, Dy[2]=%d, [3]=%d, [4]=%d, [5]=%d, [6]=%d, len=%d from device %x",
                 report[0],
                 (int8_t)report[1],
                 (int8_t)report[2],
+                (int8_t)report[3],
+                (int8_t)report[4],
+                (int8_t)report[5],
+                (int8_t)report[6],
+                len,
                 hidp->dev);
         #endif
         #if SHOW_KEYBOARD_MOUSE_CLICK_LOG
