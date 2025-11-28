@@ -133,12 +133,12 @@ static uint8_t i2c_has_slave_request = 0;
 static uint8_t i2c_tx_buf[1] = {0};
 static uint8_t i2c_rx_buf[2] = {0, 0};
 
-// TODO: config label in struct
+
 static const I2CConfig i2c_config = {
-    OPMODE_I2C,
-    100000,
+    .op_mode = OPMODE_I2C,
+    .clock_speed = 100000,
     // FAST_DUTY_CYCLE_2,
-    STD_DUTY_CYCLE
+    .duty_cycle = STD_DUTY_CYCLE,
 };
 
 static void setup_i2c_(void)
