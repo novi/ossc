@@ -307,6 +307,13 @@ static void process_i2c_recv_data(uint8_t data1, uint8_t data2)
 //     sdWrite(&SD2, reason, strlen(reason));
 // }
 
+static const WDGConfig wdgcfg = {
+  .pr = STM32_IWDG_PR_64, // Prescaler
+  .rlr = 1000             // Counter/Reload Value
+};
+
+//
+
 static void printResetReason(uint32_t csr_reg)
 {
     LOG_MAIN("reset detected: ");
@@ -374,7 +381,9 @@ int main(void)
     _usbh_dbgf(&USBHD1, "USBH Started");
 #endif
 
-    for(;;) {
+    wdgStart(&WDGD1, &wdgcfg);
+    while(true) {
+        wdgReset(&WDGD1);
 
         update_mon_out_interface();
         if (update_usb_host_power()) {
@@ -390,6 +399,7 @@ int main(void)
 #if STM32_USBH_USE_OTG1
         usbhMainLoop(&USBHD1);
 #endif
+
         osalThreadSleepMilliseconds(100);
 
         // IWDG->KR = 0xAAAA;
@@ -432,7 +442,7 @@ int main(void)
             shouldHandlePowerButton = false;
             LOG_DEBUG("Handle Power Button\r\n");
             palSetPad(GPIOC, GPIOC_NEXT_POWERSW);
-            osalThreadSleepMilliseconds(100);
+            osalThreadSleepMilliseconds(100);         
             palClearPad(GPIOC, GPIOC_NEXT_POWERSW);
         }
     }
