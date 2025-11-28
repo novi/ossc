@@ -1,6 +1,6 @@
 /*
 
-   Copyright 2021-24 Yusuke Ito
+   Copyright 2021-25 Yusuke Ito
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "log.h"
 #include "mouse.h"
 #include <string.h>
+#include "ch.h"
 
 typedef enum {
     SPIHeader_Keyboard = 1,
@@ -27,18 +28,18 @@ typedef enum {
     // SPIHeader_Mic = 3
 } SPIHeader;
 
+#define MB_SIZE 8
 #define SPI_DATA_SIZE_MAX (3)
-static uint8_t spi_send_buf[SPI_DATA_SIZE_MAX];
-// static uint8_t spi_recv_buf[SPI_DATA_SIZE_MAX];
 
-static uint8_t spi_send_buf2[SPI_DATA_SIZE_MAX];
-static volatile uint8_t spi_is_sending = 0;
-static volatile uint8_t spi_pending_data_size = 0;
-// static volatile uint8_t spi_is_wait_for_sending = 0;
-// static volatile systime_t spi_timeout_tick = 0;
+static msg_t mbBuffer[MB_SIZE];
+static mailbox_t spiMailBox;
 
-// should be called same thread
-void SendSPIData(uint8_t* buf, size_t size)
+void KeyboardInit(void)
+{
+    chMBObjectInit(&spiMailBox, mbBuffer, MB_SIZE);
+}
+
+void SendSPIData(uint8_t* buf, uint8_t size)
 {
     osalDbgAssert(SPI_DATA_SIZE_MAX <= size, "SendSPIData max size exceed.");
 
@@ -46,89 +47,45 @@ void SendSPIData(uint8_t* buf, size_t size)
     // command, data[0], data[1]...
     LOG_DEBUG("send spi %02x %02x %02x", buf[0], buf[1], buf[2]);
 
-    uint8_t header = buf[0];
-    // systime_t start, end;
-    // start = osalOsGetSystemTimeX();
-    // end = start + OSAL_MS2I(5000); // in ms
-    // while (spi_is_sending) {
-    //     spi_is_wait_for_sending = 1;
-    //     if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
-    //         // timeout
-    //         LOG_DEBUG_TEST("spi send data wait timeout, header=%d", header);
-    //         // osalDbgAssert(false, "SPI send timeout");
-    //         spi_timeout_tick = osalOsGetSystemTimeX();
-    //         return;
-    //     }
-    // }
-    if (spi_is_sending) {
-        if (spi_pending_data_size > 0) {
-            LOG_DEBUG_TEST("spi is sending, but pending buf is full");
-        } else {
-            if (header == SPIHeader_Keyboard) {
-                memcpy(spi_send_buf2, buf, size);
-                spi_pending_data_size = size;
-                LOG_DEBUG("spi is sending, pending filled.");
-            } else {
-                LOG_DEBUG_TEST("spi is sending, no keyboard event is dropped.");
-            }
-        }
-        return;
-    }
+    msg_t value = 0;
+    uint8_t tmp[SPI_DATA_SIZE_MAX+1];
+    memcpy(tmp, buf, size);
 
-    // for(size_t i = 0; spi_is_sending && i < 10000; i++);
-    // while (spi_is_sending);    
-    
-    memcpy(spi_send_buf, buf, size);
-
-    // spi_is_wait_for_sending = 0;
-    spi_is_sending = 1;
-    spiSelectI(&SPID1);
-    // spiStartExchangeI(&SPID1, size, spi_send_buf, spi_recv_buf);
-    spiStartSendI(&SPID1, size, spi_send_buf);  
-    // LOG_DEBUG_TEST("SPI");
+    tmp[3] = size; // last element is size
+    memcpy(&value, tmp, 4);
+    chMBPostI(&spiMailBox, value); // TODO: check buffer full
 }
 
 void KeyboardSendPendingDataIfNeeded(void)
 {
-    if (spi_pending_data_size > 0) {
-        spiSelectI(&SPID1);
-        spiStartSendI(&SPID1, spi_pending_data_size, spi_send_buf2);
-        spi_pending_data_size = 0;
+    msg_t value = 0;
+    if (chMBFetchTimeout(&spiMailBox, &value, TIME_INFINITE) != MSG_OK) {
+        return; // no data
     }
+
+    uint8_t tmp[4];
+    memcpy(tmp, &value, 4);
+    uint8_t size = tmp[3];
+
+    spiSelect(&SPID1); // CS = Low
+    for (uint8_t i = 0; i < size; i++) {
+        uint8_t rxData = (uint8_t)spiPolledExchange(&SPID1, tmp[i]);
+        (void)rxData;
+    }
+    spiUnselect(&SPID1); // CS = High
 }
 
 void spi_callback_data(SPIDriver *spip)
 {
     (void)spip;
-
-    // if (spi_is_wait_for_sending) {
-    //     systime_t diff = osalTimeDiffX(spi_timeout_tick, osalOsGetSystemTimeX());
-    //     LOG_DEBUG_TEST("spi send callback state %d (wait time %d)", spip->state, diff); // 4 = SPI_COMPLETE
-    // } else {
-    //     LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
-    // }
-
-    LOG_DEBUG("spi send callback state %d", spip->state); // 4 = SPI_COMPLETE
-    
-    if (spi_pending_data_size > 0) {
-        // pending data, send now
-        // uint8_t size = spi_pending_data_size;
-        // spiStartSendI(&SPID1, size, spi_send_buf2);
-        LOG_DEBUG("send pending data");
-        // sendDataIfNeeded();
-    } else {
-        spiUnselectI(&SPID1);
-        spi_is_sending = 0;
-    }
 }
 
 void spi_callback_error(SPIDriver *spip)
 {
     (void)spip;
-    spiUnselectI(&SPID1);
-    spi_is_sending = 0;
 
-    LOG_DEBUG_TEST("spi send error callback state %d", spip->state); // 4 = SPI_COMPLETE
+    // TODO: call from some thread
+    LOG_BACKGROUND("spi send error callback state %d", spip->state); // 4 = SPI_COMPLETE
 }
 
 static uint8_t mouse_left_up = 1;

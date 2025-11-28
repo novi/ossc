@@ -119,10 +119,7 @@ static void ThreadTestHID(void *p) {
             }
         }
         g_hasKeyboard = hasKeyboard;        
-        for(uint8_t i = 0; i < 40; i++) {
-            KeyboardSendPendingDataIfNeeded();
-            chThdSleepMilliseconds(5);
-        }
+        chThdSleepMilliseconds(200);
     }
 
 }
@@ -155,6 +152,17 @@ static void setup_i2c_(void)
             break;
         }
     }
+}
+
+// -- SPI thread
+static THD_WORKING_AREA(waThreadSPI, 1024);
+static THD_FUNCTION(ThreadSPI, arg) {
+
+  (void)arg;
+  chRegSetThreadName("SPISend");
+  while(true) {
+    KeyboardSendPendingDataIfNeeded();
+  }
 }
 
 // USB keyboard detect
@@ -325,6 +333,8 @@ int main(void)
 
     init_gpio_value();
 
+    KeyboardInit();
+
     spiStart(&SPID1, &spi_config);
     spiUnselect(&SPID1);
 
@@ -349,6 +359,7 @@ int main(void)
     #endif
 
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+    chThdCreateStatic(waThreadSPI, sizeof(waThreadSPI), NORMALPRIO, ThreadSPI, NULL);
 
     //start
 #if STM32_USBH_USE_OTG1
